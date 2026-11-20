@@ -1,4 +1,5 @@
 import type { EmoteRegistry } from '../emotes/registry';
+import { noteRemovedBody, restoreDeleted } from './deleted-messages';
 import { renderAll, renderFragment, type EmotesSeen } from './render';
 import { SEL } from './selectors';
 
@@ -40,9 +41,18 @@ export class ChatObserver {
     if (!found) return;
     this.observer.observe(found, { childList: true, subtree: true });
     renderAll(found, this.registry, this.onEmotes);
+    restoreDeleted(found, this.registry);
   }
 
   private onMutations(records: MutationRecord[]): void {
+    // Twitch takes a deleted message's body out before it adds the notice, in the same batch.
+    records.forEach(noteRemovedBody);
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (node instanceof Element) restoreDeleted(node, this.registry);
+      }
+    }
+
     if (this.registry.size === 0) return;
     for (const record of records) {
       for (const node of record.addedNodes) {

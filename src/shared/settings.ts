@@ -2,6 +2,10 @@
 export const BADGE_KINDS = ['giftSubs', 'drops', 'streaks', 'promotions', 'other', 'whispers'] as const;
 export type BadgeKind = (typeof BADGE_KINDS)[number];
 
+/** How a message a moderator deleted shows: its text struck through, its text faded, or Twitch's notice. */
+export const DELETED_STYLES = ['strike', 'faded', 'twitch'] as const;
+export type DeletedStyle = (typeof DELETED_STYLES)[number];
+
 export interface Settings {
   /** Adds 7TV, BetterTTV and FrankerFaceZ sections to Twitch's emote picker. */
   pickerEmotes: boolean;
@@ -11,6 +15,7 @@ export interface Settings {
   colonAutocomplete: boolean;
   /** Up and Down in an empty chat box bring back the messages sent in this tab. */
   messageHistory: boolean;
+  deletedMessages: DeletedStyle;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
   /** Hides the Chat button under the chat input; messages are sent with Enter. */
@@ -24,6 +29,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pickerLimit: 60,
   colonAutocomplete: true,
   messageHistory: true,
+  deletedMessages: 'strike',
   hideLockedEmotes: true,
   hideSendButton: true,
   badges: {
@@ -54,6 +60,9 @@ export function normalizeSettings(raw: unknown): Settings {
       : DEFAULT_SETTINGS.pickerLimit,
     colonAutocomplete: bool(r.colonAutocomplete, DEFAULT_SETTINGS.colonAutocomplete),
     messageHistory: bool(r.messageHistory, DEFAULT_SETTINGS.messageHistory),
+    deletedMessages: DELETED_STYLES.includes(r.deletedMessages as DeletedStyle)
+      ? (r.deletedMessages as DeletedStyle)
+      : DEFAULT_SETTINGS.deletedMessages,
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
     hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),
     badges: Object.fromEntries(

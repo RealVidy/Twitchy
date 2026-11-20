@@ -246,3 +246,23 @@
 .twitchy-colon-open .chat-input-tray__open:has(.autocomplete-match-list) {
   display: none !important;
 }
+
+/* Deleted messages: our copy of the text sits right before Twitch's "message deleted" notice. */
+.twitchy-deleted {
+  display: none;
+}
+
+.twitchy-deleted-strike .twitchy-deleted,
+.twitchy-deleted-faded .twitchy-deleted {
+  display: inline;
+  opacity: 0.5;
+}
+
+.twitchy-deleted-strike .twitchy-deleted {
+  text-decoration: line-through;
+}
+
+.twitchy-deleted-strike .twitchy-deleted + [data-a-target='chat-deleted-message-placeholder'],
+.twitchy-deleted-faded .twitchy-deleted + [data-a-target='chat-deleted-message-placeholder'] {
+  display: none;
+}

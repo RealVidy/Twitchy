@@ -15,6 +15,8 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ pickerLimit: 99.6 }).pickerLimit).toBe(100);
     expect(normalizeSettings({ hideSendButton: false }).hideSendButton).toBe(false);
     expect(normalizeSettings({ messageHistory: false }).messageHistory).toBe(false);
+    expect(normalizeSettings({ deletedMessages: 'faded' }).deletedMessages).toBe('faded');
+    expect(normalizeSettings({ deletedMessages: 'bold' }).deletedMessages).toBe('strike');
   });
 
   it('shows only gift sub badges by default and keeps the badge choices made', () => {

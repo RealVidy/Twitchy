@@ -44,6 +44,11 @@ function renderTokens(tokens: Token[]): DocumentFragment {
   return frag;
 }
 
+/** Plain message text with our emotes drawn in. */
+export function renderText(text: string, registry: EmoteRegistry): DocumentFragment {
+  return renderTokens(tokenize(text, (name) => registry.get(name)));
+}
+
 /**
  * Replaces emote names in one text fragment. Twitch's React still owns the original span, so we
  * hide it and add our own copy next to it instead of changing its children.

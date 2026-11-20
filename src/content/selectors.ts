@@ -1,6 +1,12 @@
 // Twitch changes its class names now and then. Every selector we rely on lives here.
 export const SEL = {
   chatContainer: '[data-test-selector="chat-scrollable-area__message-container"]',
+  /** One chat message; its aria-label is "name: message", even after the message is deleted. */
+  chatLine: '.chat-line__message',
+  /** What the user wrote. Twitch takes it out when a moderator deletes the message. */
+  messageBody: '[data-a-target="chat-line-message-body"]',
+  /** "message deleted by a moderator.", which Twitch puts where the body was. */
+  deletedNotice: '[data-a-target="chat-deleted-message-placeholder"]',
   /** Plain text parts of a chat message. Mentions, links and Twitch emotes are separate nodes. */
   textFragment: '.text-fragment[data-a-target="chat-message-text"]',
   chatInput: '[data-a-target="chat-input"]',

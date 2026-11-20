@@ -52,6 +52,19 @@ input[type='number'] {
   color: var(--fg);
 }
 
+select {
+  margin-left: auto;
+  padding: 2px 4px;
+  border: 1px solid #3a3a3d;
+  border-radius: 4px;
+  background: #0e0e10;
+  color: var(--fg);
+}
+
+.row--select {
+  align-items: center;
+}
+
 fieldset {
   margin: 10px 0 0;
   padding: 6px 0 0;

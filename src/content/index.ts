@@ -3,7 +3,13 @@ import { EmoteRegistry } from '../emotes/registry';
 import { applyEmoteSetUpdate } from '../emotes/seventv-updates';
 import { EmoteUsage } from '../emotes/usage';
 import { loadChannel, loadNotifications } from '../shared/messages';
-import { DEFAULT_SETTINGS, loadSettings, watchSettings, type Settings } from '../shared/settings';
+import {
+  DEFAULT_SETTINGS,
+  DELETED_STYLES,
+  loadSettings,
+  watchSettings,
+  type Settings,
+} from '../shared/settings';
 import { installAutocomplete } from './autocomplete';
 import { channelFromPath } from './channel';
 import { ColonComplete } from './colon-complete';
@@ -58,6 +64,9 @@ function applySettings(next: Settings): void {
   settings = next;
   document.documentElement.classList.toggle('twitchy-hide-locked', next.hideLockedEmotes);
   document.documentElement.classList.toggle('twitchy-hide-send-button', next.hideSendButton);
+  for (const style of DELETED_STYLES) {
+    document.documentElement.classList.toggle(`twitchy-deleted-${style}`, next.deletedMessages === style);
+  }
   picker.refresh();
   colon.schedule();
   badges.update();
