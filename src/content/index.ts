@@ -3,6 +3,7 @@ import { EmoteRegistry } from '../emotes/registry';
 import { loadChannel } from '../shared/messages';
 import { channelFromPath } from './channel';
 import { ChatObserver } from './chat-observer';
+import { installTooltip } from './tooltip';
 
 const registry = new EmoteRegistry();
 const chat = new ChatObserver(registry);
@@ -35,3 +36,4 @@ window.addEventListener('popstate', checkLocation);
 window.setInterval(checkLocation, 1000);
 checkLocation();
 chat.start();
+installTooltip();
