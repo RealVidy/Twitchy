@@ -1,0 +1,162 @@
+{
+  "id": "01HKQT8EWR000ESSWF3625XCS4",
+  "name": "Global Emotes",
+  "emotes": [
+    {
+      "id": "01GGD5PJA8000FH13S498E9D8X",
+      "name": "ppL",
+      "flags": 0,
+      "data": {
+        "id": "01GGD5PJA8000FH13S498E9D8X",
+        "name": "ppL",
+        "flags": 0,
+        "animated": false,
+        "host": {
+          "url": "//cdn.7tv.app/emote/01GGD5PJA8000FH13S498E9D8X",
+          "files": [
+            {
+              "name": "1x.webp",
+              "static_name": "1x.webp",
+              "width": 9,
+              "height": 7,
+              "frame_count": 1,
+              "size": 98,
+              "format": "WEBP"
+            },
+            {
+              "name": "2x.webp",
+              "static_name": "2x.webp",
+              "width": 18,
+              "height": 14,
+              "frame_count": 1,
+              "size": 104,
+              "format": "WEBP"
+            },
+            {
+              "name": "3x.webp",
+              "static_name": "3x.webp",
+              "width": 27,
+              "height": 21,
+              "frame_count": 1,
+              "size": 120,
+              "format": "WEBP"
+            },
+            {
+              "name": "4x.webp",
+              "static_name": "4x.webp",
+              "width": 36,
+              "height": 28,
+              "frame_count": 1,
+              "size": 112,
+              "format": "WEBP"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "01GB2TN09G000AZXHZ8HNEZX6G",
+      "name": "Clap2",
+      "flags": 0,
+      "data": {
+        "id": "01GB2TN09G000AZXHZ8HNEZX6G",
+        "name": "Clap2",
+        "flags": 0,
+        "animated": true,
+        "host": {
+          "url": "//cdn.7tv.app/emote/01GB2TN09G000AZXHZ8HNEZX6G",
+          "files": [
+            {
+              "name": "1x.webp",
+              "static_name": "1x_static.webp",
+              "width": 22,
+              "height": 32,
+              "frame_count": 2,
+              "size": 1348,
+              "format": "WEBP"
+            },
+            {
+              "name": "2x.webp",
+              "static_name": "2x_static.webp",
+              "width": 44,
+              "height": 64,
+              "frame_count": 2,
+              "size": 3422,
+              "format": "WEBP"
+            },
+            {
+              "name": "3x.webp",
+              "static_name": "3x_static.webp",
+              "width": 66,
+              "height": 96,
+              "frame_count": 2,
+              "size": 5934,
+              "format": "WEBP"
+            },
+            {
+              "name": "4x.webp",
+              "static_name": "4x_static.webp",
+              "width": 88,
+              "height": 128,
+              "frame_count": 2,
+              "size": 8102,
+              "format": "WEBP"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "01FCY771D800007PQ2DF3GDTN6",
+      "name": "RainTime",
+      "flags": 1,
+      "data": {
+        "id": "01FCY771D800007PQ2DF3GDTN6",
+        "name": "RainTime",
+        "flags": 256,
+        "animated": true,
+        "host": {
+          "url": "//cdn.7tv.app/emote/01FCY771D800007PQ2DF3GDTN6",
+          "files": [
+            {
+              "name": "1x.webp",
+              "static_name": "1x_static.webp",
+              "width": 32,
+              "height": 32,
+              "frame_count": 15,
+              "size": 13620,
+              "format": "WEBP"
+            },
+            {
+              "name": "2x.webp",
+              "static_name": "2x_static.webp",
+              "width": 64,
+              "height": 64,
+              "frame_count": 15,
+              "size": 35988,
+              "format": "WEBP"
+            },
+            {
+              "name": "3x.webp",
+              "static_name": "3x_static.webp",
+              "width": 96,
+              "height": 96,
+              "frame_count": 15,
+              "size": 65068,
+              "format": "WEBP"
+            },
+            {
+              "name": "4x.webp",
+              "static_name": "4x_static.webp",
+              "width": 128,
+              "height": 128,
+              "frame_count": 15,
+              "size": 85382,
+              "format": "WEBP"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
