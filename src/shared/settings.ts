@@ -7,6 +7,8 @@ export interface Settings {
   pickerEmotes: boolean;
   /** Above this many emotes, a provider's section only shows the most used ones. */
   pickerLimit: number;
+  /** Typing `:` and two letters lists the emotes whose names contain them. */
+  colonAutocomplete: boolean;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
   /** Hides the Chat button under the chat input; messages are sent with Enter. */
@@ -18,6 +20,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   pickerEmotes: true,
   pickerLimit: 60,
+  colonAutocomplete: true,
   hideLockedEmotes: true,
   hideSendButton: true,
   badges: {
@@ -46,6 +49,7 @@ export function normalizeSettings(raw: unknown): Settings {
     pickerLimit: Number.isFinite(limit)
       ? Math.min(PICKER_LIMIT_MAX, Math.max(PICKER_LIMIT_MIN, Math.round(limit)))
       : DEFAULT_SETTINGS.pickerLimit,
+    colonAutocomplete: bool(r.colonAutocomplete, DEFAULT_SETTINGS.colonAutocomplete),
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
     hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),
     badges: Object.fromEntries(

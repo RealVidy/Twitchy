@@ -11,6 +11,7 @@ import {
 const form = document.querySelector<HTMLFormElement>('#settings')!;
 const pickerEmotes = form.elements.namedItem('pickerEmotes') as HTMLInputElement;
 const pickerLimit = form.elements.namedItem('pickerLimit') as HTMLInputElement;
+const colonAutocomplete = form.elements.namedItem('colonAutocomplete') as HTMLInputElement;
 const hideLockedEmotes = form.elements.namedItem('hideLockedEmotes') as HTMLInputElement;
 const hideSendButton = form.elements.namedItem('hideSendButton') as HTMLInputElement;
 const badgeBoxes = Object.fromEntries(
@@ -24,6 +25,7 @@ function show(s: Settings): void {
   pickerEmotes.checked = s.pickerEmotes;
   pickerLimit.value = String(s.pickerLimit);
   pickerLimit.disabled = !s.pickerEmotes;
+  colonAutocomplete.checked = s.colonAutocomplete;
   hideLockedEmotes.checked = s.hideLockedEmotes;
   hideSendButton.checked = s.hideSendButton;
   for (const k of BADGE_KINDS) badgeBoxes[k].checked = s.badges[k];
@@ -34,6 +36,7 @@ form.addEventListener('change', async () => {
     await saveSettings({
       pickerEmotes: pickerEmotes.checked,
       pickerLimit: Number(pickerLimit.value),
+      colonAutocomplete: colonAutocomplete.checked,
       hideLockedEmotes: hideLockedEmotes.checked,
       hideSendButton: hideSendButton.checked,
       badges: Object.fromEntries(BADGE_KINDS.map((k) => [k, badgeBoxes[k].checked])) as Record<BadgeKind, boolean>,

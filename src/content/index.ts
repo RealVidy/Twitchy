@@ -6,6 +6,7 @@ import { loadChannel, loadNotifications } from '../shared/messages';
 import { DEFAULT_SETTINGS, loadSettings, watchSettings, type Settings } from '../shared/settings';
 import { installAutocomplete } from './autocomplete';
 import { channelFromPath } from './channel';
+import { ColonComplete } from './colon-complete';
 import { ChatObserver } from './chat-observer';
 import { EmotePicker } from './emote-picker';
 import { installLayout } from './layout';
@@ -18,6 +19,7 @@ const registry = new EmoteRegistry();
 const usage = new EmoteUsage(chrome.storage.local);
 const chat = new ChatObserver(registry, (names) => usage.record(names));
 const picker = new EmotePicker(registry, (name) => usage.count(name), () => settings);
+const colon = new ColonComplete(registry, (name) => usage.count(name), () => settings.colonAutocomplete);
 const badges = new NotificationBadges(() => settings, loadNotifications);
 const live = new SevenTvLiveUpdates((update) => {
   const emotes = applyEmoteSetUpdate(registry.getSet('7tv', 'channel'), update);
@@ -56,6 +58,7 @@ function applySettings(next: Settings): void {
   document.documentElement.classList.toggle('twitchy-hide-locked', next.hideLockedEmotes);
   document.documentElement.classList.toggle('twitchy-hide-send-button', next.hideSendButton);
   picker.refresh();
+  colon.schedule();
   badges.update();
 }
 
@@ -65,7 +68,8 @@ window.setInterval(checkLocation, 1000);
 checkLocation();
 chat.start();
 installTooltip();
-installAutocomplete(registry);
+colon.start();
+installAutocomplete(registry, colon);
 installLayout();
 applySettings(settings);
 picker.start();

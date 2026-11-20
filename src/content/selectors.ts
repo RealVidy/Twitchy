@@ -4,6 +4,12 @@ export const SEL = {
   /** Plain text parts of a chat message. Mentions, links and Twitch emotes are separate nodes. */
   textFragment: '.text-fragment[data-a-target="chat-message-text"]',
   chatInput: '[data-a-target="chat-input"]',
+  /** Wraps the chat box, the tray Twitch opens above it and the buttons under it. */
+  chatInputContainer: '.chat-input',
+  /** Twitch's own suggestions above the chat box, for `:emote` and `@user`. */
+  autocompleteList: '.autocomplete-match-list',
+  /** One suggestion; data-a-target holds the emote name. */
+  autocompleteItem: 'button[data-a-target]',
 
   /** The emote picker balloon, while it is open. */
   emotePicker: '[data-a-target="emote-picker"]',

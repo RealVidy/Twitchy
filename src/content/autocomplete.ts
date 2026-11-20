@@ -1,5 +1,6 @@
 import type { EmoteRegistry } from '../emotes/registry';
 import { replaceBeforeCaret } from './chat-input';
+import type { ColonComplete } from './colon-complete';
 import { SEL } from './selectors';
 
 /** Emote names starting with `prefix`, ignoring case, in the registry's sorted order. */
@@ -54,19 +55,26 @@ function wordBeforeCaret(): string | null {
   if (!sel?.isCollapsed || !(node instanceof Text)) return null;
   const end = sel.anchorOffset;
   const word = node.data.slice(0, end).match(/\S+$/)?.[0];
-  // @mentions belong to Twitch's own username completion.
-  if (!word || word.startsWith('@')) return null;
+  // @mentions belong to Twitch's own username completion, and :words to the colon list.
+  if (!word || word.startsWith('@') || word.startsWith(':')) return null;
   return word;
 }
 
-export function installAutocomplete(registry: EmoteRegistry): void {
+/** Tab-completion, and the `:` list's keys, which win while that list is open. */
+export function installAutocomplete(registry: EmoteRegistry, colon: ColonComplete): void {
   const completer = new Completer(() => registry.names());
   registry.onChange(() => completer.reset());
 
-  // Capture phase on the document runs before Twitch's own key handlers on the editor.
-  document.addEventListener(
+  // Capture phase on the window, added at startup, runs before Twitch's own key handlers: its
+  // suggestion list stops arrow keys, Tab and Enter in a window capture listener it adds
+  // when the list opens.
+  window.addEventListener(
     'keydown',
     (e) => {
+      if (e.target instanceof Element && e.target.closest(SEL.chatInput) && colon.handleKey(e)) {
+        completer.reset();
+        return;
+      }
       if (e.key !== 'Tab') {
         if (e.key !== 'Shift') completer.reset();
         return;
