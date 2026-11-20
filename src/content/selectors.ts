@@ -52,6 +52,16 @@ export const SEL = {
   /** The stream's uptime, next to the viewer count under the player. */
   liveTime: '.live-time',
 
+  /** The left sidebar; Twitch adds side-nav--collapsed or side-nav--expanded. */
+  sideNav: '.side-nav',
+  sideNavCollapsed: '.side-nav--collapsed',
+  /** A channel in the sidebar: the link inside the card holds /login. */
+  sideNavCardLink: '.side-nav-card a[href]',
+  /** Collapses or expands the sidebar. Twitch drops it when the window is too narrow to expand. */
+  sideNavToggle: '[data-a-target="side-nav-arrow"]',
+  /** What Twitch shows when you hover a live channel in the sidebar: name, game, title, viewers. */
+  sideNavTooltip: '.online-side-nav-channel-tooltip__body',
+
   userMenuToggle: '[data-a-target="user-menu-toggle"]',
   /** The bell in the top bar and its unread count. */
   notifications: '.onsite-notifications',

@@ -20,6 +20,8 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ autoClaimPoints: false }).autoClaimPoints).toBe(false);
     expect(normalizeSettings({ skipContentWarning: false }).skipContentWarning).toBe(false);
     expect(normalizeSettings({ videoStats: false }).videoStats).toBe(false);
+    expect(normalizeSettings({ sidebarPreviews: false }).sidebarPreviews).toBe(false);
+    expect(normalizeSettings({ sidebarExpandOnHover: false }).sidebarExpandOnHover).toBe(false);
   });
 
   it('shows only gift sub badges by default and keeps the badge choices made', () => {

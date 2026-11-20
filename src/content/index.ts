@@ -21,6 +21,7 @@ import { installLayout } from './layout';
 import { installMessageHistory } from './message-history';
 import { SevenTvLiveUpdates } from './live-updates';
 import { NotificationBadges } from './notification-badges';
+import { installSidebarPeek, installSidebarPreviews } from './sidebar';
 import { installTooltip } from './tooltip';
 import { installVideoStats } from './video-stats';
 
@@ -40,6 +41,9 @@ const live = new SevenTvLiveUpdates((update) => {
 const bonus = installBonusClaimer(() => settingsLoaded && settings.autoClaimPoints);
 const contentGate = installContentGateSkipper(() => settingsLoaded && settings.skipContentWarning);
 const videoStats = installVideoStats(() => settings.videoStats);
+const sidebarPreviews = installSidebarPreviews(() => settings.sidebarPreviews);
+// Not before the settings are in: it would open the sidebar for someone who turned this off.
+const sidebarPeek = installSidebarPeek(() => settingsLoaded && settings.sidebarExpandOnHover);
 let currentLogin: string | null = null;
 
 async function switchChannel(login: string | null): Promise<void> {
@@ -81,6 +85,8 @@ function applySettings(next: Settings): void {
   bonus.check();
   contentGate.check();
   videoStats.check();
+  sidebarPreviews.check();
+  sidebarPeek.check();
 }
 
 window.addEventListener('popstate', checkLocation);

@@ -274,3 +274,35 @@
   white-space: nowrap;
   cursor: default;
 }
+
+/* Stream thumbnail at the top of Twitch's tooltip over a live channel in the sidebar. */
+.online-side-nav-channel-tooltip__body:has(> .twitchy-side-preview) {
+  width: 320px;
+}
+
+.twitchy-side-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin: 4px 0 6px;
+  border-radius: 4px;
+  background: #0e0e10;
+  object-fit: cover;
+}
+
+/* The sidebar opened on hover keeps its collapsed place and lies over the page, so nothing moves. */
+.twitchy-side-peek :has(> .side-nav) {
+  position: relative;
+  flex-shrink: 0;
+  width: 5rem;
+}
+
+.twitchy-side-peek .side-nav {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  box-shadow: 4px 0 12px rgb(0 0 0 / 50%);
+}

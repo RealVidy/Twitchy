@@ -22,6 +22,10 @@ export interface Settings {
   skipContentWarning: boolean;
   /** Shows latency, quality and bitrate next to the viewer count under the player. */
   videoStats: boolean;
+  /** Shows the stream's thumbnail when hovering a live channel in the sidebar. */
+  sidebarPreviews: boolean;
+  /** Opens the collapsed sidebar while the pointer rests on it. */
+  sidebarExpandOnHover: boolean;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
   /** Hides the Chat button under the chat input; messages are sent with Enter. */
@@ -39,6 +43,8 @@ export const DEFAULT_SETTINGS: Settings = {
   autoClaimPoints: true,
   skipContentWarning: true,
   videoStats: true,
+  sidebarPreviews: true,
+  sidebarExpandOnHover: true,
   hideLockedEmotes: true,
   hideSendButton: true,
   badges: {
@@ -75,6 +81,8 @@ export function normalizeSettings(raw: unknown): Settings {
     autoClaimPoints: bool(r.autoClaimPoints, DEFAULT_SETTINGS.autoClaimPoints),
     skipContentWarning: bool(r.skipContentWarning, DEFAULT_SETTINGS.skipContentWarning),
     videoStats: bool(r.videoStats, DEFAULT_SETTINGS.videoStats),
+    sidebarPreviews: bool(r.sidebarPreviews, DEFAULT_SETTINGS.sidebarPreviews),
+    sidebarExpandOnHover: bool(r.sidebarExpandOnHover, DEFAULT_SETTINGS.sidebarExpandOnHover),
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
     hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),
     badges: Object.fromEntries(
