@@ -9,6 +9,8 @@ export interface Settings {
   pickerLimit: number;
   /** Typing `:` and two letters lists the emotes whose names contain them. */
   colonAutocomplete: boolean;
+  /** Up and Down in an empty chat box bring back the messages sent in this tab. */
+  messageHistory: boolean;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
   /** Hides the Chat button under the chat input; messages are sent with Enter. */
@@ -21,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pickerEmotes: true,
   pickerLimit: 60,
   colonAutocomplete: true,
+  messageHistory: true,
   hideLockedEmotes: true,
   hideSendButton: true,
   badges: {
@@ -50,6 +53,7 @@ export function normalizeSettings(raw: unknown): Settings {
       ? Math.min(PICKER_LIMIT_MAX, Math.max(PICKER_LIMIT_MIN, Math.round(limit)))
       : DEFAULT_SETTINGS.pickerLimit,
     colonAutocomplete: bool(r.colonAutocomplete, DEFAULT_SETTINGS.colonAutocomplete),
+    messageHistory: bool(r.messageHistory, DEFAULT_SETTINGS.messageHistory),
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
     hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),
     badges: Object.fromEntries(

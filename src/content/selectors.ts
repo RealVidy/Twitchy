@@ -26,6 +26,8 @@ export const SEL = {
 
   /** Row under the chat input: points, settings gear, Chat button. */
   chatButtons: '[data-test-selector="chat-input-buttons-container"]',
+  /** The Chat button, which sends the message. */
+  chatSendButton: '[data-a-target="chat-send-button"]',
   chatSettingsButton: '[data-a-target="chat-settings"]',
   /** Lives in the "Stream Chat" header, which we hide. */
   communityButton: '[data-test-selector="chat-viewer-list"]',
