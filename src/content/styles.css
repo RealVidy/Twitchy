@@ -1,0 +1,8 @@
+.twitchy-emote {
+  display: inline-block;
+  vertical-align: middle;
+  /* Same trick as Twitch's own emotes: tall emotes don't push the line apart. */
+  margin: -0.5rem 0;
+  max-height: 64px;
+  width: auto;
+}

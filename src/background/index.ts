@@ -3,8 +3,11 @@ import type { GetJson } from '../providers/types';
 import type { Request, Response } from '../shared/messages';
 import { cached, pruneCache } from './cache';
 
+// A provider that never answers must not hold back the emotes of the others.
+const TIMEOUT_MS = 10_000;
+
 const getJson: GetJson = async (url, init) => {
-  const res = await fetch(url, init);
+  const res = await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
   return res.json();
