@@ -11,6 +11,7 @@ import {
   type Settings,
 } from '../shared/settings';
 import { installAutocomplete } from './autocomplete';
+import { installBonusClaimer } from './channel-points';
 import { channelFromPath } from './channel';
 import { ColonComplete } from './colon-complete';
 import { ChatObserver } from './chat-observer';
@@ -22,6 +23,8 @@ import { NotificationBadges } from './notification-badges';
 import { installTooltip } from './tooltip';
 
 let settings: Settings = DEFAULT_SETTINGS;
+/** False until the saved settings are in: until then we don't know if auto-claim is off. */
+let settingsLoaded = false;
 const registry = new EmoteRegistry();
 const usage = new EmoteUsage(chrome.storage.local);
 const chat = new ChatObserver(registry, (names) => usage.record(names));
@@ -32,6 +35,7 @@ const live = new SevenTvLiveUpdates((update) => {
   const emotes = applyEmoteSetUpdate(registry.getSet('7tv', 'channel'), update);
   registry.replaceSet('7tv', 'channel', emotes);
 });
+const bonus = installBonusClaimer(() => settingsLoaded && settings.autoClaimPoints);
 let currentLogin: string | null = null;
 
 async function switchChannel(login: string | null): Promise<void> {
@@ -70,6 +74,7 @@ function applySettings(next: Settings): void {
   picker.refresh();
   colon.schedule();
   badges.update();
+  bonus.check();
 }
 
 window.addEventListener('popstate', checkLocation);
@@ -85,5 +90,14 @@ installLayout();
 applySettings(settings);
 picker.start();
 badges.start();
-watchSettings(applySettings);
-loadSettings().then(applySettings, (err) => console.warn('[twitchy] could not load settings', err));
+watchSettings((next) => {
+  settingsLoaded = true;
+  applySettings(next);
+});
+loadSettings().then(
+  (loaded) => {
+    settingsLoaded = true;
+    applySettings(loaded);
+  },
+  (err) => console.warn('[twitchy] could not load settings', err),
+);

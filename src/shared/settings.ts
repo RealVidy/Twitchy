@@ -16,6 +16,8 @@ export interface Settings {
   /** Up and Down in an empty chat box bring back the messages sent in this tab. */
   messageHistory: boolean;
   deletedMessages: DeletedStyle;
+  /** Clicks the channel points bonus as soon as it shows up. */
+  autoClaimPoints: boolean;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
   /** Hides the Chat button under the chat input; messages are sent with Enter. */
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: Settings = {
   colonAutocomplete: true,
   messageHistory: true,
   deletedMessages: 'strike',
+  autoClaimPoints: true,
   hideLockedEmotes: true,
   hideSendButton: true,
   badges: {
@@ -63,6 +66,7 @@ export function normalizeSettings(raw: unknown): Settings {
     deletedMessages: DELETED_STYLES.includes(r.deletedMessages as DeletedStyle)
       ? (r.deletedMessages as DeletedStyle)
       : DEFAULT_SETTINGS.deletedMessages,
+    autoClaimPoints: bool(r.autoClaimPoints, DEFAULT_SETTINGS.autoClaimPoints),
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
     hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),
     badges: Object.fromEntries(

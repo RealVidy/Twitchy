@@ -34,6 +34,10 @@ export const SEL = {
   chatButtons: '[data-test-selector="chat-input-buttons-container"]',
   /** The Chat button, which sends the message. */
   chatSendButton: '[data-a-target="chat-send-button"]',
+  /** The points balance under the chat input; Twitch adds the bonus button inside it. */
+  pointsSummary: '[data-test-selector="community-points-summary"]',
+  /** The icon in the "Claim Bonus" button, whose label changes with Twitch's language. */
+  claimBonusIcon: '.claimable-bonus__icon',
   chatSettingsButton: '[data-a-target="chat-settings"]',
   /** Lives in the "Stream Chat" header, which we hide. */
   communityButton: '[data-test-selector="chat-viewer-list"]',

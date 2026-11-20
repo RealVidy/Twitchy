@@ -3,7 +3,7 @@
 - [x] Colon autocomplete
 - [x] Message history
 - [x] Deleted message style
-- [ ] Auto-claim channel points
+- [x] Auto-claim channel points
 - [ ] Skip content warning
 - [ ] Video stats below the player (next to viewer count and elapsed time)
 - [ ] Sidebar thumbnail and expand on hover
