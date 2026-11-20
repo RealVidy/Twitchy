@@ -1,15 +1,21 @@
 import './styles.css';
 import { EmoteRegistry } from '../emotes/registry';
 import { applyEmoteSetUpdate } from '../emotes/seventv-updates';
+import { EmoteUsage } from '../emotes/usage';
 import { loadChannel } from '../shared/messages';
+import { DEFAULT_SETTINGS, loadSettings, watchSettings, type Settings } from '../shared/settings';
 import { installAutocomplete } from './autocomplete';
 import { channelFromPath } from './channel';
 import { ChatObserver } from './chat-observer';
+import { EmotePicker } from './emote-picker';
 import { SevenTvLiveUpdates } from './live-updates';
 import { installTooltip } from './tooltip';
 
+let settings: Settings = DEFAULT_SETTINGS;
 const registry = new EmoteRegistry();
-const chat = new ChatObserver(registry);
+const usage = new EmoteUsage(chrome.storage.local);
+const chat = new ChatObserver(registry, (names) => usage.record(names));
+const picker = new EmotePicker(registry, (name) => usage.count(name), () => settings);
 const live = new SevenTvLiveUpdates((update) => {
   const emotes = applyEmoteSetUpdate(registry.getSet('7tv', 'channel'), update);
   registry.replaceSet('7tv', 'channel', emotes);
@@ -19,6 +25,7 @@ let currentLogin: string | null = null;
 async function switchChannel(login: string | null): Promise<void> {
   currentLogin = login;
   registry.setSets([]);
+  void usage.switchChannel(login);
   live.watch(null);
   if (!login) return;
 
@@ -41,9 +48,20 @@ function checkLocation(): void {
 
 // Twitch is a single-page app and our isolated world cannot see its history.pushState calls,
 // so we check the URL on popstate and on a short interval.
+function applySettings(next: Settings): void {
+  settings = next;
+  document.documentElement.classList.toggle('twitchy-hide-locked', next.hideLockedEmotes);
+  picker.refresh();
+}
+
 window.addEventListener('popstate', checkLocation);
+window.addEventListener('pagehide', () => void usage.flush());
 window.setInterval(checkLocation, 1000);
 checkLocation();
 chat.start();
 installTooltip();
 installAutocomplete(registry);
+applySettings(settings);
+picker.start();
+watchSettings(applySettings);
+loadSettings().then(applySettings, (err) => console.warn('[twitchy] could not load settings', err));

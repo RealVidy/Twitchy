@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Twitchy settings</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <h1>Twitchy</h1>
+    <form id="settings">
+      <label class="row">
+        <input type="checkbox" name="pickerEmotes" />
+        <span>
+          Show 7TV, BetterTTV and FrankerFaceZ emotes in the emote picker
+        </span>
+      </label>
+      <label class="row row--sub">
+        <span>Show only the most used when a provider has more than</span>
+        <input type="number" name="pickerLimit" inputmode="numeric" />
+      </label>
+      <label class="row">
+        <input type="checkbox" name="hideLockedEmotes" />
+        <span>Hide emotes I haven't unlocked</span>
+      </label>
+    </form>
+    <p class="note">Changes apply right away on open Twitch tabs.</p>
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>

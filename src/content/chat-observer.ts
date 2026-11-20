@@ -1,5 +1,5 @@
 import type { EmoteRegistry } from '../emotes/registry';
-import { renderAll, renderFragment } from './render';
+import { renderAll, renderFragment, type EmotesSeen } from './render';
 import { SEL } from './selectors';
 
 /**
@@ -11,7 +11,10 @@ export class ChatObserver {
   private observer = new MutationObserver((records) => this.onMutations(records));
   private timer: number | undefined;
 
-  constructor(private registry: EmoteRegistry) {}
+  constructor(
+    private registry: EmoteRegistry,
+    private onEmotes?: EmotesSeen,
+  ) {}
 
   start(): void {
     this.attach();
@@ -26,7 +29,7 @@ export class ChatObserver {
 
   /** Renders messages that arrived before the emotes finished loading. */
   rescan(): void {
-    if (this.container) renderAll(this.container, this.registry);
+    if (this.container) renderAll(this.container, this.registry, this.onEmotes);
   }
 
   private attach(): void {
@@ -36,7 +39,7 @@ export class ChatObserver {
     this.container = found;
     if (!found) return;
     this.observer.observe(found, { childList: true, subtree: true });
-    renderAll(found, this.registry);
+    renderAll(found, this.registry, this.onEmotes);
   }
 
   private onMutations(records: MutationRecord[]): void {
@@ -44,8 +47,8 @@ export class ChatObserver {
     for (const record of records) {
       for (const node of record.addedNodes) {
         if (!(node instanceof HTMLElement)) continue;
-        if (node.matches(SEL.textFragment)) renderFragment(node, this.registry);
-        else renderAll(node, this.registry);
+        if (node.matches(SEL.textFragment)) renderFragment(node, this.registry, this.onEmotes);
+        else renderAll(node, this.registry, this.onEmotes);
       }
     }
   }

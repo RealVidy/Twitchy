@@ -3,6 +3,9 @@ import type { Emote } from '../providers/types';
 import { SEL } from './selectors';
 import { tokenize, type Token } from './tokenize';
 
+/** Told about the emotes of every message we render, e.g. to count how often they are used. */
+export type EmotesSeen = (names: string[]) => void;
+
 const DONE = 'twitchyDone';
 
 /** Lets the tooltip find the emote behind an <img>. */
@@ -45,13 +48,19 @@ function renderTokens(tokens: Token[]): DocumentFragment {
  * Replaces emote names in one text fragment. Twitch's React still owns the original span, so we
  * hide it and add our own copy next to it instead of changing its children.
  */
-export function renderFragment(span: HTMLElement, registry: EmoteRegistry): void {
+export function renderFragment(
+  span: HTMLElement,
+  registry: EmoteRegistry,
+  onEmotes?: EmotesSeen,
+): void {
   if (span.dataset[DONE]) return;
   span.dataset[DONE] = '1';
 
   const text = span.textContent ?? '';
   const tokens = tokenize(text, (name) => registry.get(name));
-  if (!tokens.some((t) => t.kind === 'emote')) return;
+  const emotes = tokens.flatMap((t) => (t.kind === 'emote' ? [t.emote, ...t.overlays] : []));
+  if (!emotes.length) return;
+  onEmotes?.(emotes.map((e) => e.name));
 
   const copy = document.createElement('span');
   copy.className = 'twitchy-fragment';
@@ -61,7 +70,9 @@ export function renderFragment(span: HTMLElement, registry: EmoteRegistry): void
 }
 
 /** Renders every fragment under `root` that we have not handled yet. */
-export function renderAll(root: ParentNode, registry: EmoteRegistry): void {
+export function renderAll(root: ParentNode, registry: EmoteRegistry, onEmotes?: EmotesSeen): void {
   if (registry.size === 0) return;
-  root.querySelectorAll<HTMLElement>(SEL.textFragment).forEach((s) => renderFragment(s, registry));
+  root
+    .querySelectorAll<HTMLElement>(SEL.textFragment)
+    .forEach((s) => renderFragment(s, registry, onEmotes));
 }

@@ -1,7 +1,7 @@
 import type { Emote, Provider } from '../providers/types';
 import { emoteOfImage } from './render';
 
-const PROVIDER_LABEL: Record<Provider, string> = {
+export const PROVIDER_LABEL: Record<Provider, string> = {
   '7tv': '7TV',
   bttv: 'BetterTTV',
   ffz: 'FrankerFaceZ',

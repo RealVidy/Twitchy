@@ -62,3 +62,65 @@
   align-items: center;
   gap: 6px;
 }
+
+/* Emote picker: our 7TV, BetterTTV and FrankerFaceZ sections, sized like Twitch's own. */
+.twitchy-picker__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.twitchy-picker__header strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.twitchy-picker__note {
+  color: #adadb8;
+  font-size: 12px;
+}
+
+.twitchy-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.twitchy-picker__emote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.twitchy-picker__emote:hover,
+.twitchy-picker__emote:focus-visible {
+  background: rgb(83 83 95 / 38%);
+}
+
+.twitchy-picker__emote .twitchy-emote {
+  margin: 0;
+  width: auto;
+  height: auto;
+  max-width: 36px;
+  max-height: 28px;
+}
+
+/* Twitch's "No Search Results" when only our emotes match. */
+.twitchy-empty-results {
+  display: none !important;
+}
+
+/* Emotes you have not unlocked, and whole sections (with their side bar button) of them. */
+.twitchy-hide-locked [data-a-target='emote-picker'] .emote-grid > :has([data-test-selector='badge-button-lock']),
+.twitchy-hide-locked .twitchy-locked-section,
+.twitchy-hide-locked [data-a-target='emote-picker'] :has(> .twitchy-locked-nav) {
+  display: none !important;
+}

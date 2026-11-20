@@ -45,6 +45,11 @@ export class EmoteRegistry {
     return this.byName.size;
   }
 
+  /** Every usable emote: when two sets share a name, only the one that wins. */
+  emotes(): Emote[] {
+    return [...this.byName.values()];
+  }
+
   /** All usable names, sorted case-insensitively. */
   names(): string[] {
     this.sortedNames ??= [...this.byName.keys()].sort((a, b) =>

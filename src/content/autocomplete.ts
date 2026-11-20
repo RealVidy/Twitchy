@@ -1,4 +1,5 @@
 import type { EmoteRegistry } from '../emotes/registry';
+import { replaceBeforeCaret } from './chat-input';
 import { SEL } from './selectors';
 
 /** Emote names starting with `prefix`, ignoring case, in the registry's sorted order. */
@@ -46,8 +47,8 @@ export class Completer {
   }
 }
 
-/** The word right before a collapsed caret, with the text node and offsets it sits in. */
-function wordBeforeCaret(): { node: Text; start: number; end: number; word: string } | null {
+/** The word right before a collapsed caret. */
+function wordBeforeCaret(): string | null {
   const sel = window.getSelection();
   const node = sel?.anchorNode;
   if (!sel?.isCollapsed || !(node instanceof Text)) return null;
@@ -55,22 +56,7 @@ function wordBeforeCaret(): { node: Text; start: number; end: number; word: stri
   const word = node.data.slice(0, end).match(/\S+$/)?.[0];
   // @mentions belong to Twitch's own username completion.
   if (!word || word.startsWith('@')) return null;
-  return { node, start: end - word.length, end, word };
-}
-
-/**
- * Twitch's chat box is a Slate editor that keeps its own copy of the text. Selecting the word
- * and inserting through execCommand fires the `beforeinput` event Slate listens to, so its
- * state stays in sync with what is shown.
- */
-function replace(node: Text, start: number, end: number, text: string): void {
-  const range = document.createRange();
-  range.setStart(node, start);
-  range.setEnd(node, end);
-  const sel = window.getSelection()!;
-  sel.removeAllRanges();
-  sel.addRange(range);
-  document.execCommand('insertText', false, text);
+  return word;
 }
 
 export function installAutocomplete(registry: EmoteRegistry): void {
@@ -88,14 +74,14 @@ export function installAutocomplete(registry: EmoteRegistry): void {
       if (e.ctrlKey || e.altKey || e.metaKey) return;
       if (!(e.target instanceof Element) || !e.target.closest(SEL.chatInput)) return;
 
-      const at = wordBeforeCaret();
-      if (!at) return;
-      const name = completer.next(at.word, e.shiftKey);
+      const word = wordBeforeCaret();
+      if (!word) return;
+      const name = completer.next(word, e.shiftKey);
       if (!name) return; // nothing of ours matches: let Twitch handle Tab
 
       e.preventDefault();
       e.stopImmediatePropagation();
-      replace(at.node, at.start, at.end, name);
+      replaceBeforeCaret(word, name);
     },
     true,
   );

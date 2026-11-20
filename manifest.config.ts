@@ -10,6 +10,13 @@ export default defineManifest({
     service_worker: 'src/background/index.ts',
     type: 'module',
   },
+  action: {
+    default_title: 'Twitchy settings',
+    default_popup: 'src/popup/index.html',
+  },
+  options_ui: {
+    page: 'src/popup/index.html',
+  },
   content_scripts: [
     {
       matches: ['https://www.twitch.tv/*'],
