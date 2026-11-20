@@ -10,9 +10,22 @@ describe('normalizeSettings', () => {
 
   it('keeps valid values and clamps the limit', () => {
     expect(normalizeSettings({ pickerEmotes: false, hideLockedEmotes: false, pickerLimit: 2 })).toEqual(
-      { pickerEmotes: false, hideLockedEmotes: false, pickerLimit: 6 },
+      { ...DEFAULT_SETTINGS, pickerEmotes: false, hideLockedEmotes: false, pickerLimit: 6 },
     );
     expect(normalizeSettings({ pickerLimit: 99.6 }).pickerLimit).toBe(100);
+  });
+
+  it('shows only gift sub badges by default and keeps the badge choices made', () => {
+    expect(DEFAULT_SETTINGS.badges).toEqual({
+      giftSubs: true,
+      drops: false,
+      streaks: false,
+      promotions: false,
+      other: false,
+      whispers: false,
+    });
+    const s = normalizeSettings({ badges: { giftSubs: false, whispers: true, streaks: 'yes', bogus: true } });
+    expect(s.badges).toEqual({ ...DEFAULT_SETTINGS.badges, giftSubs: false, whispers: true });
   });
 });
 

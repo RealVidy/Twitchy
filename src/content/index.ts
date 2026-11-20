@@ -2,13 +2,15 @@ import './styles.css';
 import { EmoteRegistry } from '../emotes/registry';
 import { applyEmoteSetUpdate } from '../emotes/seventv-updates';
 import { EmoteUsage } from '../emotes/usage';
-import { loadChannel } from '../shared/messages';
+import { loadChannel, loadNotifications } from '../shared/messages';
 import { DEFAULT_SETTINGS, loadSettings, watchSettings, type Settings } from '../shared/settings';
 import { installAutocomplete } from './autocomplete';
 import { channelFromPath } from './channel';
 import { ChatObserver } from './chat-observer';
 import { EmotePicker } from './emote-picker';
+import { installLayout } from './layout';
 import { SevenTvLiveUpdates } from './live-updates';
+import { NotificationBadges } from './notification-badges';
 import { installTooltip } from './tooltip';
 
 let settings: Settings = DEFAULT_SETTINGS;
@@ -16,6 +18,7 @@ const registry = new EmoteRegistry();
 const usage = new EmoteUsage(chrome.storage.local);
 const chat = new ChatObserver(registry, (names) => usage.record(names));
 const picker = new EmotePicker(registry, (name) => usage.count(name), () => settings);
+const badges = new NotificationBadges(() => settings, loadNotifications);
 const live = new SevenTvLiveUpdates((update) => {
   const emotes = applyEmoteSetUpdate(registry.getSet('7tv', 'channel'), update);
   registry.replaceSet('7tv', 'channel', emotes);
@@ -52,6 +55,7 @@ function applySettings(next: Settings): void {
   settings = next;
   document.documentElement.classList.toggle('twitchy-hide-locked', next.hideLockedEmotes);
   picker.refresh();
+  badges.update();
 }
 
 window.addEventListener('popstate', checkLocation);
@@ -61,7 +65,9 @@ checkLocation();
 chat.start();
 installTooltip();
 installAutocomplete(registry);
+installLayout();
 applySettings(settings);
 picker.start();
+badges.start();
 watchSettings(applySettings);
 loadSettings().then(applySettings, (err) => console.warn('[twitchy] could not load settings', err));

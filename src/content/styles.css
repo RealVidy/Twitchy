@@ -124,3 +124,56 @@
 .twitchy-hide-locked [data-a-target='emote-picker'] :has(> .twitchy-locked-nav) {
   display: none !important;
 }
+
+/* Tidier Twitch: no chat header or leaderboard, no sidebar headings, no stories, no Prime/Luna. */
+/* The header comes back while the community list is open: it holds the way back to chat. */
+.twitchy-tidy .stream-chat:not(:has(#community-tab-content)) .stream-chat-header,
+.twitchy-tidy .toggle-visibility__right-column--expanded,
+.twitchy-tidy
+  .chat-room__content
+  > :first-child:not(:has([class*='community-highlight-stack'], [data-a-target='chat-scroller'], .chat-input)),
+.twitchy-tidy .side-nav--expanded .followed-side-nav-header,
+.twitchy-tidy .side-nav [role='group'][aria-label*='stories' i],
+.twitchy-tidy .side-nav [class*='stories' i]:not(.side-nav-card, .side-nav-card *),
+.twitchy-tidy .top-nav__prime {
+  display: none !important;
+}
+
+/* Keeps its row so the sidebar's collapse arrow still has a place. */
+.twitchy-tidy .side-nav--expanded .side-nav__title h3 {
+  visibility: hidden;
+}
+
+/* Our copies of the community and collapse buttons, next to the chat settings gear. */
+.twitchy-chat-tools {
+  display: flex;
+  align-items: center;
+}
+
+/* Top bar count bubbles the user did not ask for. */
+.twitchy-hide-bell-badge .onsite-notifications :is(.tw-number-badge, [class*='NumberBadge'], .tw-pill),
+.twitchy-hide-whispers-badge .twitchy-whispers :is(.tw-number-badge, [class*='NumberBadge'], .tw-pill) {
+  display: none !important;
+}
+
+.onsite-notifications:has(> .twitchy-bell-count) {
+  position: relative;
+}
+
+.twitchy-bell-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: 9px;
+  background: #eb0400;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+}

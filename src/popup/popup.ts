@@ -1,9 +1,20 @@
-import { loadSettings, PICKER_LIMIT_MAX, PICKER_LIMIT_MIN, saveSettings, type Settings } from '../shared/settings';
+import {
+  BADGE_KINDS,
+  loadSettings,
+  PICKER_LIMIT_MAX,
+  PICKER_LIMIT_MIN,
+  saveSettings,
+  type BadgeKind,
+  type Settings,
+} from '../shared/settings';
 
 const form = document.querySelector<HTMLFormElement>('#settings')!;
 const pickerEmotes = form.elements.namedItem('pickerEmotes') as HTMLInputElement;
 const pickerLimit = form.elements.namedItem('pickerLimit') as HTMLInputElement;
 const hideLockedEmotes = form.elements.namedItem('hideLockedEmotes') as HTMLInputElement;
+const badgeBoxes = Object.fromEntries(
+  BADGE_KINDS.map((k) => [k, form.elements.namedItem(`badge-${k}`) as HTMLInputElement]),
+) as Record<BadgeKind, HTMLInputElement>;
 
 pickerLimit.min = String(PICKER_LIMIT_MIN);
 pickerLimit.max = String(PICKER_LIMIT_MAX);
@@ -13,6 +24,7 @@ function show(s: Settings): void {
   pickerLimit.value = String(s.pickerLimit);
   pickerLimit.disabled = !s.pickerEmotes;
   hideLockedEmotes.checked = s.hideLockedEmotes;
+  for (const k of BADGE_KINDS) badgeBoxes[k].checked = s.badges[k];
 }
 
 form.addEventListener('change', async () => {
@@ -21,6 +33,7 @@ form.addEventListener('change', async () => {
       pickerEmotes: pickerEmotes.checked,
       pickerLimit: Number(pickerLimit.value),
       hideLockedEmotes: hideLockedEmotes.checked,
+      badges: Object.fromEntries(BADGE_KINDS.map((k) => [k, badgeBoxes[k].checked])) as Record<BadgeKind, boolean>,
     }),
   );
 });

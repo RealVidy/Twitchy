@@ -52,6 +52,23 @@ input[type='number'] {
   color: var(--fg);
 }
 
+fieldset {
+  margin: 10px 0 0;
+  padding: 6px 0 0;
+  border: 0;
+  border-top: 1px solid #3a3a3d;
+}
+
+legend {
+  padding: 0 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+fieldset .row {
+  padding: 3px 0;
+}
+
 .note {
   margin: 8px 0 0;
   color: var(--muted);

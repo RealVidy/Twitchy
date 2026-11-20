@@ -1,4 +1,5 @@
 import { loadChannelEmotes } from '../providers';
+import { fetchNotifications } from '../providers/twitch';
 import type { GetJson } from '../providers/types';
 import type { Request, Response } from '../shared/messages';
 import { cached, pruneCache } from './cache';
@@ -13,11 +14,22 @@ const getJson: GetJson = async (url, init) => {
   return res.json();
 };
 
-chrome.runtime.onMessage.addListener((msg: Request, _sender, sendResponse) => {
-  if (msg?.type !== 'load-channel') return false;
+function handle(msg: Request): Promise<unknown> | null {
+  switch (msg?.type) {
+    case 'load-channel':
+      return loadChannelEmotes(getJson, cached, msg.login);
+    case 'load-notifications':
+      return fetchNotifications(getJson, msg.token);
+    default:
+      return null;
+  }
+}
 
-  loadChannelEmotes(getJson, cached, msg.login)
-    .then((data) => sendResponse({ ok: true, data } satisfies Response<typeof data>))
+chrome.runtime.onMessage.addListener((msg: Request, _sender, sendResponse) => {
+  const work = handle(msg);
+  if (!work) return false;
+  work
+    .then((data) => sendResponse({ ok: true, data } satisfies Response<unknown>))
     .catch((err: unknown) =>
       sendResponse({ ok: false, error: String(err) } satisfies Response<never>),
     );

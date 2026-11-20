@@ -17,4 +17,20 @@ export const SEL = {
   pickerNavButton: '.emote-picker__nav-content button',
   /** The lock drawn over an emote you have not unlocked. */
   emoteLock: '[data-test-selector="badge-button-lock"]',
+
+  /** Row under the chat input: points, settings gear, Chat button. */
+  chatButtons: '[data-test-selector="chat-input-buttons-container"]',
+  chatSettingsButton: '[data-a-target="chat-settings"]',
+  /** Lives in the "Stream Chat" header, which we hide. */
+  communityButton: '[data-test-selector="chat-viewer-list"]',
+  /** Floats over the chat header while chat is open; becomes "Expand Chat" when collapsed. */
+  collapseChatButton: '[data-a-target="right-column__toggle-collapse-btn"]',
+
+  userMenuToggle: '[data-a-target="user-menu-toggle"]',
+  /** The bell in the top bar and its unread count. */
+  notifications: '.onsite-notifications',
+  notificationsButton: '.onsite-notifications button',
+  whispersButton: '[data-a-target="whisper-box-button"]',
+  /** Twitch's red count bubbles. */
+  countBadge: '.tw-number-badge, [class*="NumberBadge"], .tw-pill',
 } as const;

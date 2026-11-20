@@ -1,3 +1,7 @@
+/** The kinds of top bar notifications whose red count badge can be shown or hidden. */
+export const BADGE_KINDS = ['giftSubs', 'drops', 'streaks', 'promotions', 'other', 'whispers'] as const;
+export type BadgeKind = (typeof BADGE_KINDS)[number];
+
 export interface Settings {
   /** Adds 7TV, BetterTTV and FrankerFaceZ sections to Twitch's emote picker. */
   pickerEmotes: boolean;
@@ -5,12 +9,22 @@ export interface Settings {
   pickerLimit: number;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
+  /** Which kinds of new notifications get a red count badge in the top bar. */
+  badges: Record<BadgeKind, boolean>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   pickerEmotes: true,
   pickerLimit: 60,
   hideLockedEmotes: true,
+  badges: {
+    giftSubs: true,
+    drops: false,
+    streaks: false,
+    promotions: false,
+    other: false,
+    whispers: false,
+  },
 };
 
 export const PICKER_LIMIT_MIN = 6;
@@ -23,12 +37,16 @@ export function normalizeSettings(raw: unknown): Settings {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<Record<keyof Settings, unknown>>;
   const bool = (v: unknown, d: boolean) => (typeof v === 'boolean' ? v : d);
   const limit = Number(r.pickerLimit);
+  const badges = (r.badges && typeof r.badges === 'object' ? r.badges : {}) as Record<string, unknown>;
   return {
     pickerEmotes: bool(r.pickerEmotes, DEFAULT_SETTINGS.pickerEmotes),
     pickerLimit: Number.isFinite(limit)
       ? Math.min(PICKER_LIMIT_MAX, Math.max(PICKER_LIMIT_MIN, Math.round(limit)))
       : DEFAULT_SETTINGS.pickerLimit,
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
+    badges: Object.fromEntries(
+      BADGE_KINDS.map((k) => [k, bool(badges[k], DEFAULT_SETTINGS.badges[k])]),
+    ) as Record<BadgeKind, boolean>,
   };
 }
 
