@@ -20,6 +20,8 @@ export interface Settings {
   autoClaimPoints: boolean;
   /** Clicks "Start Watching" on the warning Twitch shows before streams with content labels. */
   skipContentWarning: boolean;
+  /** Shows latency, quality and bitrate next to the viewer count under the player. */
+  videoStats: boolean;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
   /** Hides the Chat button under the chat input; messages are sent with Enter. */
@@ -36,6 +38,7 @@ export const DEFAULT_SETTINGS: Settings = {
   deletedMessages: 'strike',
   autoClaimPoints: true,
   skipContentWarning: true,
+  videoStats: true,
   hideLockedEmotes: true,
   hideSendButton: true,
   badges: {
@@ -71,6 +74,7 @@ export function normalizeSettings(raw: unknown): Settings {
       : DEFAULT_SETTINGS.deletedMessages,
     autoClaimPoints: bool(r.autoClaimPoints, DEFAULT_SETTINGS.autoClaimPoints),
     skipContentWarning: bool(r.skipContentWarning, DEFAULT_SETTINGS.skipContentWarning),
+    videoStats: bool(r.videoStats, DEFAULT_SETTINGS.videoStats),
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
     hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),
     badges: Object.fromEntries(

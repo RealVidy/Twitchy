@@ -23,6 +23,13 @@ export default defineManifest({
       js: ['src/content/index.ts'],
       run_at: 'document_idle',
     },
+    {
+      // Reads Twitch's player for the video stats; our isolated content script cannot reach it.
+      matches: ['https://www.twitch.tv/*'],
+      js: ['src/page/index.ts'],
+      run_at: 'document_idle',
+      world: 'MAIN',
+    },
   ],
   permissions: ['storage'],
   host_permissions: [

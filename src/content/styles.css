@@ -266,3 +266,11 @@
 .twitchy-deleted-faded .twitchy-deleted + [data-a-target='chat-deleted-message-placeholder'] {
   display: none;
 }
+
+/* Video stats after the uptime under the player; fixed-width digits so the row does not jiggle. */
+.twitchy-video-stats {
+  color: #adadb8;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: default;
+}

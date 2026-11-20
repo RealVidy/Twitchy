@@ -47,6 +47,11 @@ export const SEL = {
   /** Floats over the chat header while chat is open; becomes "Expand Chat" when collapsed. */
   collapseChatButton: '[data-a-target="right-column__toggle-collapse-btn"]',
 
+  /** Holds the video; its React props carry Twitch's player. */
+  videoPlayer: '[data-a-target="video-player"]',
+  /** The stream's uptime, next to the viewer count under the player. */
+  liveTime: '.live-time',
+
   userMenuToggle: '[data-a-target="user-menu-toggle"]',
   /** The bell in the top bar and its unread count. */
   notifications: '.onsite-notifications',

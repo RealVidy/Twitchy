@@ -22,6 +22,7 @@ import { installMessageHistory } from './message-history';
 import { SevenTvLiveUpdates } from './live-updates';
 import { NotificationBadges } from './notification-badges';
 import { installTooltip } from './tooltip';
+import { installVideoStats } from './video-stats';
 
 let settings: Settings = DEFAULT_SETTINGS;
 /** False until the saved settings are in: until then we don't know if auto-claim or skipping is off. */
@@ -38,6 +39,7 @@ const live = new SevenTvLiveUpdates((update) => {
 });
 const bonus = installBonusClaimer(() => settingsLoaded && settings.autoClaimPoints);
 const contentGate = installContentGateSkipper(() => settingsLoaded && settings.skipContentWarning);
+const videoStats = installVideoStats(() => settings.videoStats);
 let currentLogin: string | null = null;
 
 async function switchChannel(login: string | null): Promise<void> {
@@ -78,6 +80,7 @@ function applySettings(next: Settings): void {
   badges.update();
   bonus.check();
   contentGate.check();
+  videoStats.check();
 }
 
 window.addEventListener('popstate', checkLocation);
