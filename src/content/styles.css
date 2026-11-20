@@ -306,3 +306,27 @@
   z-index: 1000;
   box-shadow: 4px 0 12px rgb(0 0 0 / 50%);
 }
+/* The volume while the wheel turns it over the player, since Twitch's slider stops at 100%. */
+.twitchy-volume {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  z-index: 10;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 70%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity 0.3s;
+}
+
+.twitchy-volume--visible {
+  opacity: 1;
+  transition: none;
+}

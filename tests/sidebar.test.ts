@@ -7,6 +7,7 @@ import {
   previewUrl,
   sideNavLogin,
 } from '../src/content/sidebar';
+import { isolateListeners } from './helpers';
 
 /** Twitch's sidebar, trimmed: a collapsed card is an avatar in a link to the channel. */
 const SIDEBAR = `
@@ -41,27 +42,6 @@ function openTooltip(): HTMLElement {
 }
 
 const preview = () => document.querySelector<HTMLImageElement>('.twitchy-side-preview');
-
-/**
- * Records the listeners an install adds to the document, <html> and window and takes them away
- * after each test, so the sidebar code of earlier tests no longer reacts.
- */
-function isolateListeners(): void {
-  const added: [EventTarget, string, EventListenerOrEventListenerObject][] = [];
-  beforeEach(() => {
-    for (const target of [document, document.documentElement, window] as EventTarget[]) {
-      const original = target.addEventListener.bind(target);
-      vi.spyOn(target, 'addEventListener').mockImplementation((type, listener, options) => {
-        if (listener) added.push([target, type, listener]);
-        original(type, listener, options);
-      });
-    }
-  });
-  afterEach(() => {
-    for (const [target, type, listener] of added.splice(0)) target.removeEventListener(type, listener);
-    vi.restoreAllMocks();
-  });
-}
 
 describe('previewUrl', () => {
   it("points at Twitch's live thumbnail and changes every minute", () => {

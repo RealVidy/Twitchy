@@ -26,6 +26,8 @@ export interface Settings {
   sidebarPreviews: boolean;
   /** Opens the collapsed sidebar while the pointer rests on it. */
   sidebarExpandOnHover: boolean;
+  /** The mouse wheel over the player turns the volume, past 100% for quiet channels. */
+  volumeWheel: boolean;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
   /** Hides the Chat button under the chat input; messages are sent with Enter. */
@@ -45,6 +47,7 @@ export const DEFAULT_SETTINGS: Settings = {
   videoStats: true,
   sidebarPreviews: true,
   sidebarExpandOnHover: true,
+  volumeWheel: true,
   hideLockedEmotes: true,
   hideSendButton: true,
   badges: {
@@ -83,6 +86,7 @@ export function normalizeSettings(raw: unknown): Settings {
     videoStats: bool(r.videoStats, DEFAULT_SETTINGS.videoStats),
     sidebarPreviews: bool(r.sidebarPreviews, DEFAULT_SETTINGS.sidebarPreviews),
     sidebarExpandOnHover: bool(r.sidebarExpandOnHover, DEFAULT_SETTINGS.sidebarExpandOnHover),
+    volumeWheel: bool(r.volumeWheel, DEFAULT_SETTINGS.volumeWheel),
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
     hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),
     badges: Object.fromEntries(

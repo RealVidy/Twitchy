@@ -7,4 +7,4 @@
 - [x] Skip content warning
 - [x] Video stats below the player (next to viewer count and elapsed time)
 - [x] Sidebar thumbnail and expand on hover
-- [ ] Increase volume past limit with mouse wheel for streams that are too quiet. Remember that max sound setting for each streamer
+- [x] Increase volume past limit with mouse wheel for streams that are too quiet. Remember that max sound setting for each streamer

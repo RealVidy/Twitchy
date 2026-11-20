@@ -1,8 +1,10 @@
 import { SEL } from '../content/selectors';
 import type { PlayerStats } from '../shared/player-stats';
 
-/** The parts of Twitch's player (Amazon IVS) that we read. */
+/** The parts of Twitch's player (Amazon IVS) that we use. */
 export interface IvsPlayer {
+  setVolume(volume: number): void;
+  setMuted(muted: boolean): void;
   getState(): string;
   isPaused(): boolean;
   getLiveLatency(): number;

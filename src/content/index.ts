@@ -24,6 +24,7 @@ import { NotificationBadges } from './notification-badges';
 import { installSidebarPeek, installSidebarPreviews } from './sidebar';
 import { installTooltip } from './tooltip';
 import { installVideoStats } from './video-stats';
+import { VolumeBoost } from './volume';
 
 let settings: Settings = DEFAULT_SETTINGS;
 /** False until the saved settings are in: until then we don't know if auto-claim or skipping is off. */
@@ -44,12 +45,15 @@ const videoStats = installVideoStats(() => settings.videoStats);
 const sidebarPreviews = installSidebarPreviews(() => settings.sidebarPreviews);
 // Not before the settings are in: it would open the sidebar for someone who turned this off.
 const sidebarPeek = installSidebarPeek(() => settingsLoaded && settings.sidebarExpandOnHover);
+// Not before the settings are in: a saved boost would be applied for someone who turned this off.
+const volume = new VolumeBoost(chrome.storage.local, () => settingsLoaded && settings.volumeWheel);
 let currentLogin: string | null = null;
 
 async function switchChannel(login: string | null): Promise<void> {
   currentLogin = login;
   registry.setSets([]);
   void usage.switchChannel(login);
+  void volume.switchChannel(login);
   live.watch(null);
   if (!login) return;
 
@@ -87,11 +91,13 @@ function applySettings(next: Settings): void {
   videoStats.check();
   sidebarPreviews.check();
   sidebarPeek.check();
+  volume.apply();
 }
 
 window.addEventListener('popstate', checkLocation);
 window.addEventListener('pagehide', () => void usage.flush());
 window.setInterval(checkLocation, 1000);
+volume.start();
 checkLocation();
 chat.start();
 installTooltip();

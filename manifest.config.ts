@@ -24,7 +24,8 @@ export default defineManifest({
       run_at: 'document_idle',
     },
     {
-      // Reads Twitch's player for the video stats; our isolated content script cannot reach it.
+      // Reads Twitch's player for the video stats and sets its volume for the mouse wheel; our
+      // isolated content script cannot reach it.
       matches: ['https://www.twitch.tv/*'],
       js: ['src/page/index.ts'],
       run_at: 'document_idle',

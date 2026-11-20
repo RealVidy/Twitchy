@@ -24,6 +24,8 @@ const ROW = `
 
 function fakePlayer(overrides: Partial<IvsPlayer> = {}): IvsPlayer {
   return {
+    setVolume: () => {},
+    setMuted: () => {},
     getState: () => 'Playing',
     isPaused: () => false,
     getLiveLatency: () => 3.527,

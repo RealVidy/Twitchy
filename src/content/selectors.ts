@@ -49,6 +49,10 @@ export const SEL = {
 
   /** Holds the video; its React props carry Twitch's player. */
   videoPlayer: '[data-a-target="video-player"]',
+  /** The stream's own video; the page has other, paused ones for previews. */
+  playerVideo: '[data-a-target="video-player"] video',
+  /** Menus and dialogs inside the player, which scroll with the wheel themselves. */
+  playerMenu: '[role="menu"], [role="dialog"], [data-a-target="player-settings-menu"]',
   /** The stream's uptime, next to the viewer count under the player. */
   liveTime: '.live-time',
 
