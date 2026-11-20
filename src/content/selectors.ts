@@ -38,6 +38,9 @@ export const SEL = {
   pointsSummary: '[data-test-selector="community-points-summary"]',
   /** The icon in the "Claim Bonus" button, whose label changes with Twitch's language. */
   claimBonusIcon: '.claimable-bonus__icon',
+  /** "Start Watching" on the content warning over the player; older mature gate as a fallback. */
+  contentGateButton:
+    '[data-a-target="content-classification-gate-overlay-start-watching-button"], [data-a-target="player-overlay-mature-accept"]',
   chatSettingsButton: '[data-a-target="chat-settings"]',
   /** Lives in the "Stream Chat" header, which we hide. */
   communityButton: '[data-test-selector="chat-viewer-list"]',

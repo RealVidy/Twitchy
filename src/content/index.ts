@@ -13,6 +13,7 @@ import {
 import { installAutocomplete } from './autocomplete';
 import { installBonusClaimer } from './channel-points';
 import { channelFromPath } from './channel';
+import { installContentGateSkipper } from './content-gate';
 import { ColonComplete } from './colon-complete';
 import { ChatObserver } from './chat-observer';
 import { EmotePicker } from './emote-picker';
@@ -23,7 +24,7 @@ import { NotificationBadges } from './notification-badges';
 import { installTooltip } from './tooltip';
 
 let settings: Settings = DEFAULT_SETTINGS;
-/** False until the saved settings are in: until then we don't know if auto-claim is off. */
+/** False until the saved settings are in: until then we don't know if auto-claim or skipping is off. */
 let settingsLoaded = false;
 const registry = new EmoteRegistry();
 const usage = new EmoteUsage(chrome.storage.local);
@@ -36,6 +37,7 @@ const live = new SevenTvLiveUpdates((update) => {
   registry.replaceSet('7tv', 'channel', emotes);
 });
 const bonus = installBonusClaimer(() => settingsLoaded && settings.autoClaimPoints);
+const contentGate = installContentGateSkipper(() => settingsLoaded && settings.skipContentWarning);
 let currentLogin: string | null = null;
 
 async function switchChannel(login: string | null): Promise<void> {
@@ -75,6 +77,7 @@ function applySettings(next: Settings): void {
   colon.schedule();
   badges.update();
   bonus.check();
+  contentGate.check();
 }
 
 window.addEventListener('popstate', checkLocation);

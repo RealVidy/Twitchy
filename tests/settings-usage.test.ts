@@ -18,6 +18,7 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ deletedMessages: 'faded' }).deletedMessages).toBe('faded');
     expect(normalizeSettings({ deletedMessages: 'bold' }).deletedMessages).toBe('strike');
     expect(normalizeSettings({ autoClaimPoints: false }).autoClaimPoints).toBe(false);
+    expect(normalizeSettings({ skipContentWarning: false }).skipContentWarning).toBe(false);
   });
 
   it('shows only gift sub badges by default and keeps the badge choices made', () => {
