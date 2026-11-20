@@ -44,3 +44,21 @@
 .twitchy-tooltip__meta {
   color: #adadb8;
 }
+
+.twitchy-stack {
+  display: inline-grid;
+  vertical-align: middle;
+  place-items: center;
+  margin: -0.5rem 0;
+}
+
+.twitchy-stack > .twitchy-emote {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+
+.twitchy-tooltip__images {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

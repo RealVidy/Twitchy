@@ -23,10 +23,20 @@ export function createEmoteImage(emote: Emote): HTMLImageElement {
   return img;
 }
 
+/** An emote with zero-width emotes drawn on top of it, all in one grid cell. */
+function createStack(base: Emote, overlays: Emote[]): HTMLSpanElement {
+  const stack = document.createElement('span');
+  stack.className = 'twitchy-stack';
+  stack.append(createEmoteImage(base), ...overlays.map(createEmoteImage));
+  return stack;
+}
+
 function renderTokens(tokens: Token[]): DocumentFragment {
   const frag = document.createDocumentFragment();
   for (const t of tokens) {
-    frag.append(t.kind === 'text' ? document.createTextNode(t.text) : createEmoteImage(t.emote));
+    if (t.kind === 'text') frag.append(document.createTextNode(t.text));
+    else if (t.overlays.length) frag.append(createStack(t.emote, t.overlays));
+    else frag.append(createEmoteImage(t.emote));
   }
   return frag;
 }

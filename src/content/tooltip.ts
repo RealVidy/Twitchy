@@ -20,23 +20,35 @@ function tooltipElement(): HTMLDivElement {
   return tip;
 }
 
-function fill(el: HTMLDivElement, emote: Emote): void {
-  const big = emote.images.at(-1)!;
-  const img = document.createElement('img');
-  img.className = 'twitchy-tooltip__image';
-  img.src = big.url;
-  img.alt = '';
+function describe(emote: Emote): string {
+  const scope = emote.scope === 'channel' ? 'Channel emote' : 'Global emote';
+  return `${PROVIDER_LABEL[emote.provider]} · ${scope}${emote.zeroWidth ? ' · Zero-width' : ''}`;
+}
+
+/** One emote, or a stack: the base emote first, then its overlays. */
+function fill(el: HTMLDivElement, emotes: Emote[]): void {
+  const images = document.createElement('div');
+  images.className = 'twitchy-tooltip__images';
+  for (const emote of emotes) {
+    const img = document.createElement('img');
+    img.className = 'twitchy-tooltip__image';
+    img.src = emote.images.at(-1)!.url;
+    img.alt = '';
+    images.append(img);
+  }
 
   const name = document.createElement('div');
   name.className = 'twitchy-tooltip__name';
-  name.textContent = emote.name;
+  name.textContent = emotes.map((e) => e.name).join(' + ');
 
-  const meta = document.createElement('div');
-  meta.className = 'twitchy-tooltip__meta';
-  const scope = emote.scope === 'channel' ? 'Channel emote' : 'Global emote';
-  meta.textContent = `${PROVIDER_LABEL[emote.provider]} · ${scope}${emote.zeroWidth ? ' · Zero-width' : ''}`;
+  const metas = emotes.map((emote) => {
+    const meta = document.createElement('div');
+    meta.className = 'twitchy-tooltip__meta';
+    meta.textContent = emotes.length > 1 ? `${emote.name}: ${describe(emote)}` : describe(emote);
+    return meta;
+  });
 
-  el.replaceChildren(img, name, meta);
+  el.replaceChildren(images, name, ...metas);
 }
 
 /** Places the tooltip above the emote, or below it when there is no room above. */
@@ -53,13 +65,15 @@ function place(el: HTMLDivElement, target: Element): void {
   el.style.left = `${left}px`;
 }
 
-function show(target: HTMLImageElement, emote: Emote): void {
+function show(target: Element, emotes: Emote[]): void {
   const el = tooltipElement();
-  fill(el, emote);
+  fill(el, emotes);
   el.classList.add('twitchy-tooltip--visible');
   place(el, target);
-  // The big image may change the size once it has loaded.
-  el.querySelector('img')?.addEventListener('load', () => place(el, target), { once: true });
+  // The big images change the size once they have loaded.
+  el.querySelectorAll('img').forEach((img) =>
+    img.addEventListener('load', () => place(el, target), { once: true }),
+  );
 }
 
 function hide(): void {
@@ -70,8 +84,11 @@ export function installTooltip(): void {
   document.addEventListener('mouseover', (e) => {
     const target = e.target;
     if (!(target instanceof HTMLImageElement)) return;
-    const emote = emoteOfImage.get(target);
-    if (emote) show(target, emote);
+    if (!emoteOfImage.has(target)) return;
+    const stack = target.closest('.twitchy-stack');
+    if (!stack) return show(target, [emoteOfImage.get(target)!]);
+    const imgs = [...stack.querySelectorAll<HTMLImageElement>('img.twitchy-emote')];
+    show(stack, imgs.flatMap((img) => emoteOfImage.get(img) ?? []));
   });
   document.addEventListener('mouseout', (e) => {
     if (e.target instanceof HTMLImageElement && emoteOfImage.has(e.target)) hide();

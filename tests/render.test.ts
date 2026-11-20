@@ -45,6 +45,28 @@ describe('tokenize', () => {
   });
 });
 
+describe('zero-width emotes', () => {
+  const show = (text: string) =>
+    tokenize(text, lookup)
+      .map((t) =>
+        t.kind === 'text' ? t.text : `[${[t.emote, ...t.overlays].map((e) => e.name).join('+')}]`,
+      )
+      .join('');
+
+  it('stacks on the emote before, dropping the space between', () => {
+    expect(show('lol KEKW RainTime ok')).toBe('lol [KEKW+RainTime] ok');
+  });
+
+  it('stacks several overlays', () => {
+    expect(show('KEKW  RainTime RainTime')).toBe('[KEKW+RainTime+RainTime]');
+  });
+
+  it('shows on its own after text or at the start', () => {
+    expect(show('RainTime')).toBe('[RainTime]');
+    expect(show('hello RainTime')).toBe('hello [RainTime]');
+  });
+});
+
 describe('renderAll', () => {
   let registry: EmoteRegistry;
 
@@ -74,6 +96,13 @@ describe('renderAll', () => {
 
     expect(second.hidden).toBe(false);
     expect(document.querySelector('.mention-fragment')?.textContent).toBe('@KEKW');
+  });
+
+  it('puts a stack in one element with the base image first', () => {
+    document.querySelector('.text-fragment')!.textContent = 'KEKW RainTime';
+    renderAll(document.body, registry);
+    const stack = document.querySelector('.twitchy-stack')!;
+    expect([...stack.querySelectorAll('img')].map((i) => i.alt)).toEqual(['KEKW', 'RainTime']);
   });
 
   it('renders each fragment once', () => {
