@@ -54,6 +54,7 @@ function checkLocation(): void {
 function applySettings(next: Settings): void {
   settings = next;
   document.documentElement.classList.toggle('twitchy-hide-locked', next.hideLockedEmotes);
+  document.documentElement.classList.toggle('twitchy-hide-send-button', next.hideSendButton);
   picker.refresh();
   badges.update();
 }

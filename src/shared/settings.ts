@@ -9,6 +9,8 @@ export interface Settings {
   pickerLimit: number;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
   hideLockedEmotes: boolean;
+  /** Hides the Chat button under the chat input; messages are sent with Enter. */
+  hideSendButton: boolean;
   /** Which kinds of new notifications get a red count badge in the top bar. */
   badges: Record<BadgeKind, boolean>;
 }
@@ -17,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pickerEmotes: true,
   pickerLimit: 60,
   hideLockedEmotes: true,
+  hideSendButton: true,
   badges: {
     giftSubs: true,
     drops: false,
@@ -44,6 +47,7 @@ export function normalizeSettings(raw: unknown): Settings {
       ? Math.min(PICKER_LIMIT_MAX, Math.max(PICKER_LIMIT_MIN, Math.round(limit)))
       : DEFAULT_SETTINGS.pickerLimit,
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
+    hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),
     badges: Object.fromEntries(
       BADGE_KINDS.map((k) => [k, bool(badges[k], DEFAULT_SETTINGS.badges[k])]),
     ) as Record<BadgeKind, boolean>,

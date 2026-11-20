@@ -144,6 +144,11 @@
   visibility: hidden;
 }
 
+/* The Chat button under the chat input, for those who send with Enter. */
+.twitchy-hide-send-button .chat-input__buttons-container > :has([data-a-target='chat-send-button']) {
+  display: none !important;
+}
+
 /* Our copies of the community and collapse buttons, next to the chat settings gear. */
 .twitchy-chat-tools {
   display: flex;
