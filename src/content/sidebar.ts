@@ -1,4 +1,4 @@
-import { HOLD_MUTE, type HoldMute } from '../shared/volume';
+import { HOLD_MUTE, savedVolume, type HoldMute } from '../shared/volume';
 import { channelFromPath } from './channel';
 import { SEL } from './selectors';
 
@@ -17,8 +17,6 @@ export const EMBED_ORIGIN = 'https://player.twitch.tv';
 export const EMBED_NAMESPACE = 'twitch-embed-player-proxy';
 export const EMBED_SET_MUTED = 10;
 export const EMBED_SET_VOLUME = 11;
-/** Twitch's volume before the user ever moved its slider. */
-const DEFAULT_VOLUME = 0.5;
 
 /** Twitch's live thumbnail for a channel. A new query each minute gets past the CDN's cached copy. */
 export function previewUrl(login: string, now = Date.now()): string {
@@ -35,20 +33,6 @@ export function embedUrl(login: string, muted: boolean, host = location.hostname
     controls: 'false',
   });
   return `${EMBED_ORIGIN}/?${params}`;
-}
-
-/** The volume Twitch saved for its player, which the preview plays at. */
-export function savedVolume(storage: Pick<Storage, 'getItem'> = localStorage): { volume: number; muted: boolean } {
-  const raw = storage.getItem('volume');
-  const volume = raw === null ? NaN : Number(raw);
-  let muted = false;
-  try {
-    const flags = JSON.parse(storage.getItem('video-muted') ?? '{}') as { default?: unknown } | null;
-    muted = flags?.default === true;
-  } catch {
-    // Broken or changed by Twitch: play with sound, as Twitch does by default.
-  }
-  return { volume: volume >= 0 && volume <= 1 ? volume : DEFAULT_VOLUME, muted };
 }
 
 /** The channel of the sidebar card `target` is in, or null outside the sidebar's channel cards. */

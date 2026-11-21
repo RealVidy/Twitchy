@@ -10,11 +10,10 @@ import {
   installSidebarPreviews,
   PEEK_CLASS,
   previewUrl,
-  savedVolume,
   guestRowLogin,
   sideNavLogin,
 } from '../src/content/sidebar';
-import { HOLD_MUTE } from '../src/shared/volume';
+import { HOLD_MUTE, savedVolume } from '../src/shared/volume';
 import { isolateListeners } from './helpers';
 
 /** Twitch's sidebar, trimmed: a collapsed card is an avatar in a link to the channel. */

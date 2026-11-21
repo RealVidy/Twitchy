@@ -87,6 +87,7 @@ describe('VolumeBoost', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     document.body.innerHTML = PLAYER;
+    localStorage.clear();
     video = document.querySelector('video')!;
     video.volume = 1;
     enabled = true;
@@ -208,12 +209,24 @@ describe('VolumeBoost', () => {
   it('unmutes on the way up, where the volume was, and stays muted on the way down', async () => {
     const { boost } = setup();
     await boost.switchChannel('quiet');
-    video.volume = 0.3;
+    // Twitch sets the video's volume to 0 while muted; its saved volume keeps the real one.
+    localStorage.setItem('volume', '0.3');
+    video.volume = 0;
     video.muted = true;
     wheel('down');
     expect(posted).toEqual([]);
     wheel('up');
     expect(posted).toEqual([{ volume: 0.3, muted: false }]);
+  });
+
+  it('unmutes a notch up when the volume was all the way down', async () => {
+    const { boost } = setup();
+    await boost.switchChannel('quiet');
+    localStorage.setItem('volume', '0');
+    video.volume = 0;
+    video.muted = true;
+    wheel('up');
+    expect(posted).toEqual([{ volume: 0.05, muted: false }]);
   });
 
   it('leaves the wheel alone outside the player, in its menus and with Ctrl for zoom', async () => {

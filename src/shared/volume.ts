@@ -61,3 +61,23 @@ export interface MuteToggled {
   /** Twitch's volume, 0 to 1, which it keeps while muted. */
   volume: number;
 }
+
+/** Twitch's volume before the user ever moved its slider. */
+const DEFAULT_VOLUME = 0.5;
+
+/**
+ * The volume Twitch saved for its player. Unlike the video's own volume, which Twitch sets to 0 while
+ * muted, it keeps the level the stream comes back at.
+ */
+export function savedVolume(storage: Pick<Storage, 'getItem'> = localStorage): { volume: number; muted: boolean } {
+  const raw = storage.getItem('volume');
+  const volume = raw === null ? NaN : Number(raw);
+  let muted = false;
+  try {
+    const flags = JSON.parse(storage.getItem('video-muted') ?? '{}') as { default?: unknown } | null;
+    muted = flags?.default === true;
+  } catch {
+    // Broken or changed by Twitch: play with sound, as Twitch does by default.
+  }
+  return { volume: volume >= 0 && volume <= 1 ? volume : DEFAULT_VOLUME, muted };
+}

@@ -1,4 +1,4 @@
-import { normalizeBoost, SET_VOLUME, splitLevel, stepLevel, type SetVolume } from '../shared/volume';
+import { normalizeBoost, savedVolume, SET_VOLUME, splitLevel, stepLevel, type SetVolume } from '../shared/volume';
 import { SEL } from './selectors';
 
 /** The part of chrome.storage.local we use, so tests can pass a fake. */
@@ -132,7 +132,10 @@ export class VolumeBoost {
     let level: number;
     if (video.muted && !rapid) {
       if (direction < 0) return;
-      level = video.volume * this.boost; // scrolling up unmutes, where the volume was
+      // Scrolling up unmutes where the volume was. Twitch sets the video's volume to 0 while muted,
+      // so that comes from its saved volume; at 0 it would stay silent, so it goes up a notch.
+      level = savedVolume().volume * this.boost;
+      if (level === 0) level = stepLevel(level, 1);
     } else {
       level = rapid ? this.last.level : video.volume * this.boost;
       for (let i = 0; i < notches; i++) level = stepLevel(level, direction);
