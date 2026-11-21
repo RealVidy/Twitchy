@@ -6,6 +6,8 @@ import { SEL } from './selectors';
 const PREVIEW = 'twitchy-side-preview';
 /** On the preview once its stream plays: styles.css shows the video over the thumbnail. */
 const PLAYING = `${PREVIEW}--playing`;
+/** On <html> once the pointer left the sidebar card: styles.css hides Twitch's tooltip at once. */
+export const TOOLTIP_GONE = 'twitchy-side-tooltip-gone';
 /** On <html> while we hold the sidebar open: styles.css lays it over the page instead of beside it. */
 export const PEEK_CLASS = 'twitchy-side-peek';
 
@@ -42,24 +44,6 @@ export function sideNavLogin(target: EventTarget | null): string | null {
   const link = target.closest<HTMLAnchorElement>(SEL.sideNavCardLink);
   if (!link?.closest(SEL.sideNav)) return null;
   return channelFromPath(new URL(link.getAttribute('href')!, location.origin).pathname);
-}
-
-/**
- * The channel of the row `target` is in, in the tooltip of channels streaming together, or null
- * elsewhere. A row only has the channel's avatar and display name, which is the login unless the
- * channel picked a localized one.
- */
-export function guestRowLogin(target: EventTarget | null): string | null {
-  if (!(target instanceof Element)) return null;
-  const tooltip = target.closest(SEL.sideNavGuestTooltip);
-  if (!tooltip) return null;
-  // The smallest box around the target with an avatar is the row; one with several is the list.
-  for (let el: Element | null = target; el && el !== tooltip; el = el.parentElement) {
-    const avatars = el.querySelectorAll<HTMLImageElement>(SEL.avatarImage);
-    if (avatars.length > 1) return null;
-    if (avatars.length === 1) return channelFromPath(`/${avatars[0].alt.trim()}`);
-  }
-  return null;
 }
 
 /**
@@ -110,10 +94,11 @@ export function addPreview(tooltip: Element, login: string, video: boolean, now 
  * as other Twitch extensions do: its thumbnail, or with `video` the stream itself, with its sound.
  * While a preview plays with sound, the stream being watched is muted. Twitch's tooltip does not
  * say which channel it is for, so we remember the card under the pointer (or keyboard focus) and
- * only look for the tooltip while one is. For channels streaming together, the tooltip lists them
- * all, and the preview follows the one under the pointer.
+ * only look for the tooltip while one is. For channels streaming together, the preview is the
+ * channel of the card. When the pointer leaves the card, the tooltip goes with its preview.
  */
 export function installSidebarPreviews(enabled: () => boolean, video: () => boolean): { check: () => void } {
+  const root = document.documentElement;
   let login: string | null = null;
   let holding = false;
 
@@ -166,18 +151,20 @@ export function installSidebarPreviews(enabled: () => boolean, video: () => bool
     syncMute();
   });
   document.addEventListener('mouseover', (e) => {
-    if (e.target instanceof Element && e.target.closest(SEL.sideNavTooltip)) {
-      // Inside the tooltip, keep the preview; over a channel streaming together, show that one.
-      login = guestRowLogin(e.target) ?? login;
-    } else {
-      login = sideNavLogin(e.target);
-    }
-    if (login) check();
+    const was = login;
+    login = sideNavLogin(e.target);
+    // Twitch keeps its tooltip a moment after the pointer leaves the card, and as long as the
+    // pointer is over it, in the way of the pointer. Hide it and stop the preview right away.
+    root.classList.toggle(TOOLTIP_GONE, !login && enabled());
+    if (login || was) check();
   });
   // Twitch moves the focus into its tooltip when it opens, so only a card getting focus counts.
   document.addEventListener('focusin', (e) => {
     login = sideNavLogin(e.target) ?? login;
-    if (login) check();
+    if (login) {
+      root.classList.remove(TOOLTIP_GONE);
+      check();
+    }
   });
   // The tooltip opens a moment after the pointer lands on the card, and closes when it leaves:
   // the stream being watched gets its sound back then. No need to look otherwise.

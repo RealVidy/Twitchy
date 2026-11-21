@@ -304,6 +304,13 @@
   object-fit: cover;
 }
 
+/* Twitch keeps its sidebar tooltip a moment after the pointer leaves the card, and while the
+   pointer is over it. Once the pointer left the card, it is gone. */
+.twitchy-side-tooltip-gone
+  .tw-dialog-layer:has(.online-side-nav-channel-tooltip__body, .side-nav-guest-star-tooltip__body) {
+  display: none !important;
+}
+
 /* Hidden until the stream plays. The tooltip closes when the pointer leaves the card, so the
    player must not catch the pointer. */
 .twitchy-side-preview > iframe {

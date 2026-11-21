@@ -73,10 +73,6 @@ export const SEL = {
    * Channels streaming together get the second one, which also lists the others.
    */
   sideNavTooltip: '.online-side-nav-channel-tooltip__body, .side-nav-guest-star-tooltip__body',
-  /** The tooltip of channels streaming together: a row per channel, each with its avatar. */
-  sideNavGuestTooltip: '.side-nav-guest-star-tooltip__body',
-  /** A channel's avatar; its alt is the channel's display name. */
-  avatarImage: '.tw-avatar img[alt]',
 
   userMenuToggle: '[data-a-target="user-menu-toggle"]',
   /** The bell in the top bar and its unread count. */
