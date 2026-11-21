@@ -60,6 +60,24 @@ export function sideNavLogin(target: EventTarget | null): string | null {
 }
 
 /**
+ * The channel of the row `target` is in, in the tooltip of channels streaming together, or null
+ * elsewhere. A row only has the channel's avatar and display name, which is the login unless the
+ * channel picked a localized one.
+ */
+export function guestRowLogin(target: EventTarget | null): string | null {
+  if (!(target instanceof Element)) return null;
+  const tooltip = target.closest(SEL.sideNavGuestTooltip);
+  if (!tooltip) return null;
+  // The smallest box around the target with an avatar is the row; one with several is the list.
+  for (let el: Element | null = target; el && el !== tooltip; el = el.parentElement) {
+    const avatars = el.querySelectorAll<HTMLImageElement>(SEL.avatarImage);
+    if (avatars.length > 1) return null;
+    if (avatars.length === 1) return channelFromPath(`/${avatars[0].alt.trim()}`);
+  }
+  return null;
+}
+
+/**
  * Puts the stream's thumbnail at the top of Twitch's sidebar tooltip, or updates the one there.
  * With `video`, Twitch's embedded player plays the stream over it; the thumbnail shows until the
  * stream starts. Returns true when it added the preview, which makes the tooltip taller.
@@ -105,7 +123,8 @@ export function addPreview(tooltip: Element, login: string, video: boolean, now 
  * as other Twitch extensions do: its thumbnail, or with `video` the stream itself, with its sound.
  * While a preview plays with sound, the stream being watched is muted. Twitch's tooltip does not
  * say which channel it is for, so we remember the card under the pointer (or keyboard focus) and
- * only look for the tooltip while one is.
+ * only look for the tooltip while one is. For channels streaming together, the tooltip lists them
+ * all, and the preview follows the one under the pointer.
  */
 export function installSidebarPreviews(enabled: () => boolean, video: () => boolean): { check: () => void } {
   let login: string | null = null;
@@ -160,7 +179,12 @@ export function installSidebarPreviews(enabled: () => boolean, video: () => bool
     syncMute();
   });
   document.addEventListener('mouseover', (e) => {
-    login = sideNavLogin(e.target);
+    if (e.target instanceof Element && e.target.closest(SEL.sideNavTooltip)) {
+      // Inside the tooltip, keep the preview; over a channel streaming together, show that one.
+      login = guestRowLogin(e.target) ?? login;
+    } else {
+      login = sideNavLogin(e.target);
+    }
     if (login) check();
   });
   // Twitch moves the focus into its tooltip when it opens, so only a card getting focus counts.

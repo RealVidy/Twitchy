@@ -11,6 +11,7 @@ import {
   PEEK_CLASS,
   previewUrl,
   savedVolume,
+  guestRowLogin,
   sideNavLogin,
 } from '../src/content/sidebar';
 import { HOLD_MUTE } from '../src/shared/volume';
@@ -37,10 +38,35 @@ const TOOLTIP = `
     </div>
   </div></div>`;
 
+/** The tooltip of channels streaming together, trimmed: a row per channel under the title. */
+const GUEST_TOOLTIP = `
+  <div class="ReactModal__Content" role="dialog"><div data-popper-placement="right-start">
+    <div class="side-nav-guest-star-tooltip__body">
+      <p class="title">Subathon jour 3</p>
+      <div class="list">
+        <div class="row"><div><div class="tw-avatar"><img alt="MoMaN"></div><div class="name">MoMaN</div></div>
+          <div><span>689</span></div></div>
+        <p>Live with:</p>
+        <div class="row"><div><div class="tw-avatar"><img alt="Berlu"></div><div class="name">Berlu</div></div>
+          <div><span>1.1K</span></div></div>
+        <div class="row"><div><div class="tw-avatar"><img alt="ねこ"></div><div class="name">ねこ</div></div>
+          <div><span>987</span></div></div>
+      </div>
+    </div>
+  </div></div>`;
+
 const NOW = Date.UTC(2026, 10, 21, 12, 0, 30);
 
 function hover(el: Element): void {
   el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+}
+
+/** The row of the channel streaming together with that display name. */
+const guestRow = (name: string) => document.querySelector(`img[alt="${name}"]`)!.closest('.row')!;
+
+function openGuestTooltip(): HTMLElement {
+  document.body.insertAdjacentHTML('beforeend', GUEST_TOOLTIP);
+  return document.querySelector('.side-nav-guest-star-tooltip__body')!;
 }
 
 function openTooltip(): HTMLElement {
@@ -78,6 +104,25 @@ describe('sideNavLogin', () => {
     expect(sideNavLogin(null)).toBeNull();
     document.body.innerHTML = '<div class="side-nav-card"><a href="/florence">x</a></div>';
     expect(sideNavLogin(document.querySelector('a'))).toBeNull();
+  });
+});
+
+describe('guestRowLogin', () => {
+  beforeEach(() => {
+    document.body.innerHTML = SIDEBAR + GUEST_TOOLTIP;
+  });
+
+  it('reads the channel from the row the pointer is on', () => {
+    expect(guestRowLogin(guestRow('MoMaN').querySelector('.name'))).toBe('moman');
+    expect(guestRowLogin(guestRow('Berlu').querySelector('span'))).toBe('berlu');
+    expect(guestRowLogin(document.querySelector('img[alt="Berlu"]'))).toBe('berlu');
+  });
+
+  it('gives nothing between the rows, for a localized name, or outside the tooltip', () => {
+    expect(guestRowLogin(document.querySelector('.title'))).toBeNull();
+    expect(guestRowLogin(document.querySelector('.list'))).toBeNull();
+    expect(guestRowLogin(guestRow('ねこ').querySelector('.name'))).toBeNull();
+    expect(guestRowLogin(document.querySelector('img[alt="florence"]'))).toBeNull();
   });
 });
 
@@ -179,6 +224,29 @@ describe('installSidebarPreviews', () => {
       '<div role="dialog"><div class="side-nav-guest-star-tooltip__body"><p>Florence</p></div></div>',
     );
     await vi.waitFor(() => expect(preview()?.src).toContain('live_user_florence-'));
+  });
+
+  it('shows the channel under the pointer among channels streaming together', async () => {
+    hover(document.querySelector('img[alt="florence"]')!);
+    openGuestTooltip();
+    await vi.waitFor(() => expect(preview()?.src).toContain('live_user_florence-'));
+    hover(guestRow('Berlu').querySelector('.name')!);
+    expect(preview()!.src).toContain('live_user_berlu-');
+    // Between the rows, or over one it cannot read, the last channel stays.
+    hover(document.querySelector('.title')!);
+    hover(guestRow('ねこ').querySelector('.name')!);
+    expect(preview()!.src).toContain('live_user_berlu-');
+    hover(guestRow('MoMaN'));
+    expect(preview()!.src).toContain('live_user_moman-');
+  });
+
+  it('keeps the preview while the pointer is in the tooltip', async () => {
+    hover(document.querySelector('img[alt="florence"]')!);
+    const tooltip = openTooltip();
+    await vi.waitFor(() => expect(preview()).not.toBeNull());
+    hover(tooltip.querySelector('p')!);
+    previews.check();
+    expect(preview()!.src).toContain('live_user_florence-');
   });
 
   it('follows the pointer to the next channel', async () => {
@@ -301,6 +369,25 @@ describe('installSidebarPreviews with the stream playing', () => {
     // Twitch closes its tooltip when the pointer leaves the card.
     hover(document.querySelector('main img')!);
     document.querySelector('.ReactModal__Content')!.remove();
+    await vi.waitFor(() => expect(sent).toEqual([held(true), held(false)]));
+  });
+
+  it('keeps playing while the pointer moves into the tooltip, and plays the guest it lands on', async () => {
+    hover(document.querySelector('img[alt="florence"]')!);
+    openGuestTooltip();
+    await vi.waitFor(() => expect(frame()).not.toBeNull());
+    report({ playback: 'Playing', muted: false, volume: 0.8 });
+    await vi.waitFor(() => expect(sent).toEqual([held(true)]));
+
+    hover(document.querySelector('.title')!);
+    document.body.append(document.createElement('div'));
+    await Promise.resolve();
+    expect(frame()!.src).toBe(embedUrl('florence', false));
+    expect(playing()).toBe(true);
+
+    hover(guestRow('Berlu'));
+    expect(frame()!.src).toBe(embedUrl('berlu', false));
+    expect(playing()).toBe(false);
     await vi.waitFor(() => expect(sent).toEqual([held(true), held(false)]));
   });
 
