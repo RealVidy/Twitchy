@@ -13,6 +13,7 @@ import {
   guestRowLogin,
   sideNavLogin,
 } from '../src/content/sidebar';
+import { PREVIEW_FRAME_NAME } from '../src/embed/embedded';
 import { HOLD_MUTE, savedVolume } from '../src/shared/volume';
 import { isolateListeners } from './helpers';
 
@@ -146,6 +147,7 @@ describe('addPreview', () => {
     addPreview(tooltip, 'florence', true, NOW);
     expect(frame()!.src).toBe(embedUrl('florence', false));
     expect(frame()!.allow).toBe('autoplay');
+    expect(frame()!.name).toBe(PREVIEW_FRAME_NAME);
     box()!.classList.add('twitchy-side-preview--playing');
 
     addPreview(tooltip, 'florence', true, NOW + 60_000);

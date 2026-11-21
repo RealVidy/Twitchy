@@ -1,3 +1,4 @@
+import { PREVIEW_FRAME_NAME } from '../embed/embedded';
 import { HOLD_MUTE, savedVolume, type HoldMute } from '../shared/volume';
 import { channelFromPath } from './channel';
 import { SEL } from './selectors';
@@ -90,6 +91,8 @@ export function addPreview(tooltip: Element, login: string, video: boolean, now 
     if (!frame) {
       frame = document.createElement('iframe');
       frame.allow = 'autoplay';
+      // Tells our script in the player to show the video alone.
+      frame.name = PREVIEW_FRAME_NAME;
       frame.tabIndex = -1;
       frame.setAttribute('aria-hidden', 'true');
       box.append(frame);
