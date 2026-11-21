@@ -12,7 +12,7 @@ export function installClickToMute(enabled: () => boolean, boost: () => number):
   /** A player menu was open when the button went down: Twitch closes it there, before the click. */
   let menuWasOpen = false;
 
-  document.addEventListener('pointerdown', () => (menuWasOpen = !!document.querySelector(SEL.playerMenu)), true);
+  document.addEventListener('pointerdown', () => (menuWasOpen = menuOpen()), true);
   // Capturing on the document runs before Twitch's own click handler, which we keep out of it.
   document.addEventListener(
     'click',
@@ -21,7 +21,7 @@ export function installClickToMute(enabled: () => boolean, boost: () => number):
       if (!(e.target instanceof Element)) return;
       const player = e.target.closest(SEL.playerClickHandler)?.closest(SEL.videoPlayer);
       // With a settings menu open, the click only closes it, as on Twitch.
-      if (!player || menuWasOpen || document.querySelector(SEL.playerMenu)) return;
+      if (!player || menuWasOpen || menuOpen()) return;
       e.stopPropagation();
       clicked = player;
       const message: ToggleMute = { type: TOGGLE_MUTE };
@@ -36,4 +36,15 @@ export function installClickToMute(enabled: () => boolean, boost: () => number):
     const volume = typeof data.volume === 'number' ? data.volume : 1;
     showIndicator(clicked, data.muted ? 'Muted' : formatLevel(volume * boost()));
   });
+}
+
+/**
+ * True while one of the player's menus is open. Twitch's sidebar tooltip is a dialog too, which
+ * stays open, hidden, once the pointer left its channel: it must not count, or clicks stop muting.
+ */
+function menuOpen(): boolean {
+  return [...document.querySelectorAll(SEL.playerMenu)].some(
+    (el) =>
+      !el.closest(SEL.sideNavTooltip) && !el.querySelector(SEL.sideNavTooltip) && el.checkVisibility?.() !== false,
+  );
 }

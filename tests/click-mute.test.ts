@@ -90,6 +90,16 @@ describe('installClickToMute', () => {
     expect(posted).toEqual([{ type: TOGGLE_MUTE }]);
   });
 
+  it('still mutes while Twitch keeps a sidebar tooltip open, hidden, after the pointer left it', () => {
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      '<div class="ReactModal__Content" role="dialog"><div class="online-side-nav-channel-tooltip__body"></div></div>',
+    );
+    overlay().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    click(overlay());
+    expect(posted).toEqual([{ type: TOGGLE_MUTE }]);
+  });
+
   it('does nothing while turned off', () => {
     enabled = false;
     click(overlay());
