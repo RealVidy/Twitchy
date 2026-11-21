@@ -63,8 +63,11 @@ export const SEL = {
   sideNavCardLink: '.side-nav-card a[href]',
   /** Collapses or expands the sidebar. Twitch drops it when the window is too narrow to expand. */
   sideNavToggle: '[data-a-target="side-nav-arrow"]',
-  /** What Twitch shows when you hover a live channel in the sidebar: name, game, title, viewers. */
-  sideNavTooltip: '.online-side-nav-channel-tooltip__body',
+  /**
+   * What Twitch shows when you hover a live channel in the sidebar: name, game, title, viewers.
+   * Channels streaming together get the second one, which also lists the others.
+   */
+  sideNavTooltip: '.online-side-nav-channel-tooltip__body, .side-nav-guest-star-tooltip__body',
 
   userMenuToggle: '[data-a-target="user-menu-toggle"]',
   /** The bell in the top bar and its unread count. */

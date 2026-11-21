@@ -21,6 +21,7 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ skipContentWarning: false }).skipContentWarning).toBe(false);
     expect(normalizeSettings({ videoStats: false }).videoStats).toBe(false);
     expect(normalizeSettings({ sidebarPreviews: false }).sidebarPreviews).toBe(false);
+    expect(normalizeSettings({ sidebarPreviewVideo: false }).sidebarPreviewVideo).toBe(false);
     expect(normalizeSettings({ sidebarExpandOnHover: false }).sidebarExpandOnHover).toBe(false);
     expect(normalizeSettings({ volumeWheel: false }).volumeWheel).toBe(false);
   });

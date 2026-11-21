@@ -1,9 +1,11 @@
 // Runs in Twitch's own page (MAIN world), the only place that can reach its player.
-// It answers the content script's requests: it reads the player for the video stats and sets its
-// volume for the mouse wheel.
+// It answers the content script's requests: it reads the player for the video stats, sets its
+// volume for the mouse wheel and mutes it while a sidebar preview plays.
 import { STATS_REPLY, STATS_REQUEST, type StatsReply } from '../shared/player-stats';
-import { SET_VOLUME, type SetVolume } from '../shared/volume';
-import { findPlayer, readStats } from './player';
+import { HOLD_MUTE, SET_VOLUME, type HoldMute, type SetVolume } from '../shared/volume';
+import { createMuteHold, findPlayer, readStats } from './player';
+
+const holdMute = createMuteHold();
 
 window.addEventListener('message', (e) => {
   if (e.source !== window) return;
@@ -13,6 +15,9 @@ window.addEventListener('message', (e) => {
     window.postMessage(reply, location.origin);
   } else if (data?.type === SET_VOLUME) {
     setVolume(data as Partial<SetVolume>);
+  } else if (data?.type === HOLD_MUTE) {
+    const { held } = data as Partial<HoldMute>;
+    if (typeof held === 'boolean') holdMute(held);
   }
 });
 

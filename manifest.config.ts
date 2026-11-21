@@ -24,12 +24,19 @@ export default defineManifest({
       run_at: 'document_idle',
     },
     {
-      // Reads Twitch's player for the video stats and sets its volume for the mouse wheel; our
-      // isolated content script cannot reach it.
+      // Reads Twitch's player for the video stats, sets its volume for the mouse wheel and mutes it
+      // while a sidebar preview plays; our isolated content script cannot reach it.
       matches: ['https://www.twitch.tv/*'],
       js: ['src/page/index.ts'],
       run_at: 'document_idle',
       world: 'MAIN',
+    },
+    {
+      // Skips the content warning in the player of our sidebar previews, which is a frame of its own.
+      matches: ['https://player.twitch.tv/*'],
+      js: ['src/embed/index.ts'],
+      run_at: 'document_idle',
+      all_frames: true,
     },
   ],
   permissions: ['storage'],

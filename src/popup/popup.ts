@@ -19,6 +19,7 @@ const autoClaimPoints = form.elements.namedItem('autoClaimPoints') as HTMLInputE
 const skipContentWarning = form.elements.namedItem('skipContentWarning') as HTMLInputElement;
 const videoStats = form.elements.namedItem('videoStats') as HTMLInputElement;
 const sidebarPreviews = form.elements.namedItem('sidebarPreviews') as HTMLInputElement;
+const sidebarPreviewVideo = form.elements.namedItem('sidebarPreviewVideo') as HTMLInputElement;
 const sidebarExpandOnHover = form.elements.namedItem('sidebarExpandOnHover') as HTMLInputElement;
 const volumeWheel = form.elements.namedItem('volumeWheel') as HTMLInputElement;
 const hideLockedEmotes = form.elements.namedItem('hideLockedEmotes') as HTMLInputElement;
@@ -41,6 +42,8 @@ function show(s: Settings): void {
   skipContentWarning.checked = s.skipContentWarning;
   videoStats.checked = s.videoStats;
   sidebarPreviews.checked = s.sidebarPreviews;
+  sidebarPreviewVideo.checked = s.sidebarPreviewVideo;
+  sidebarPreviewVideo.disabled = !s.sidebarPreviews;
   sidebarExpandOnHover.checked = s.sidebarExpandOnHover;
   volumeWheel.checked = s.volumeWheel;
   hideLockedEmotes.checked = s.hideLockedEmotes;
@@ -60,6 +63,7 @@ form.addEventListener('change', async () => {
       skipContentWarning: skipContentWarning.checked,
       videoStats: videoStats.checked,
       sidebarPreviews: sidebarPreviews.checked,
+      sidebarPreviewVideo: sidebarPreviewVideo.checked,
       sidebarExpandOnHover: sidebarExpandOnHover.checked,
       volumeWheel: volumeWheel.checked,
       hideLockedEmotes: hideLockedEmotes.checked,

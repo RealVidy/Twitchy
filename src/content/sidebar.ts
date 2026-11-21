@@ -1,16 +1,54 @@
+import { HOLD_MUTE, type HoldMute } from '../shared/volume';
 import { channelFromPath } from './channel';
 import { SEL } from './selectors';
 
 const PREVIEW = 'twitchy-side-preview';
+/** On the preview once its stream plays: styles.css shows the video over the thumbnail. */
+const PLAYING = `${PREVIEW}--playing`;
 /** On <html> while we hold the sidebar open: styles.css lays it over the page instead of beside it. */
 export const PEEK_CLASS = 'twitchy-side-peek';
 
 const PEEK_OPEN_DELAY = 300;
 const PEEK_CLOSE_DELAY = 200;
 
+/** Twitch's embeddable player, which plays a channel's stream in an iframe. */
+export const EMBED_ORIGIN = 'https://player.twitch.tv';
+/** How the embed and the page talk, as Twitch's own embed script does it. */
+export const EMBED_NAMESPACE = 'twitch-embed-player-proxy';
+export const EMBED_SET_MUTED = 10;
+export const EMBED_SET_VOLUME = 11;
+/** Twitch's volume before the user ever moved its slider. */
+const DEFAULT_VOLUME = 0.5;
+
 /** Twitch's live thumbnail for a channel. A new query each minute gets past the CDN's cached copy. */
 export function previewUrl(login: string, now = Date.now()): string {
   return `https://static-cdn.jtvnw.net/previews-ttv/live_user_${login}-440x248.jpg?t=${Math.floor(now / 60_000)}`;
+}
+
+/** Twitch's embedded player for a channel, playing at once, without its controls. */
+export function embedUrl(login: string, muted: boolean, host = location.hostname): string {
+  const params = new URLSearchParams({
+    channel: login,
+    parent: host,
+    autoplay: 'true',
+    muted: String(muted),
+    controls: 'false',
+  });
+  return `${EMBED_ORIGIN}/?${params}`;
+}
+
+/** The volume Twitch saved for its player, which the preview plays at. */
+export function savedVolume(storage: Pick<Storage, 'getItem'> = localStorage): { volume: number; muted: boolean } {
+  const raw = storage.getItem('volume');
+  const volume = raw === null ? NaN : Number(raw);
+  let muted = false;
+  try {
+    const flags = JSON.parse(storage.getItem('video-muted') ?? '{}') as { default?: unknown } | null;
+    muted = flags?.default === true;
+  } catch {
+    // Broken or changed by Twitch: play with sound, as Twitch does by default.
+  }
+  return { volume: volume >= 0 && volume <= 1 ? volume : DEFAULT_VOLUME, muted };
 }
 
 /** The channel of the sidebar card `target` is in, or null outside the sidebar's channel cards. */
@@ -23,44 +61,104 @@ export function sideNavLogin(target: EventTarget | null): string | null {
 
 /**
  * Puts the stream's thumbnail at the top of Twitch's sidebar tooltip, or updates the one there.
- * Returns true when it added one, which makes the tooltip taller.
+ * With `video`, Twitch's embedded player plays the stream over it; the thumbnail shows until the
+ * stream starts. Returns true when it added the preview, which makes the tooltip taller.
  */
-export function addPreview(tooltip: Element, login: string, now = Date.now()): boolean {
-  let img = tooltip.querySelector<HTMLImageElement>(`:scope > .${PREVIEW}`);
-  const added = !img;
-  if (!img) {
-    img = document.createElement('img');
-    img.className = PREVIEW;
+export function addPreview(tooltip: Element, login: string, video: boolean, now = Date.now()): boolean {
+  let box = tooltip.querySelector<HTMLElement>(`:scope > .${PREVIEW}`);
+  const added = !box;
+  if (!box) {
+    // With styles.css's aspect-ratio, the tooltip has its final size before anything loads.
+    box = document.createElement('div');
+    box.className = PREVIEW;
+    const img = document.createElement('img');
     img.alt = '';
-    // With styles.css's aspect-ratio, the tooltip has its final size before the image loads.
-    img.width = 440;
-    img.height = 248;
-    tooltip.prepend(img);
+    box.append(img);
+    tooltip.prepend(box);
   }
+  const img = box.querySelector('img')!;
   const src = previewUrl(login, now);
   if (img.getAttribute('src') !== src) img.src = src;
+
+  let frame = box.querySelector('iframe');
+  if (!video) {
+    frame?.remove();
+    box.classList.remove(PLAYING);
+  } else if (frame?.dataset.login !== login) {
+    if (!frame) {
+      frame = document.createElement('iframe');
+      frame.allow = 'autoplay';
+      frame.tabIndex = -1;
+      frame.setAttribute('aria-hidden', 'true');
+      box.append(frame);
+    }
+    frame.dataset.login = login;
+    frame.removeAttribute('data-sound');
+    frame.src = embedUrl(login, savedVolume().muted);
+    box.classList.remove(PLAYING);
+  }
   return added;
 }
 
 /**
- * Shows the stream's thumbnail in the tooltip Twitch opens over a live channel in the sidebar,
- * as other Twitch extensions do. Twitch's tooltip does not say which channel it is for, so we remember the card
- * under the pointer (or keyboard focus) and only look for the tooltip while one is.
+ * Shows a preview of the stream in the tooltip Twitch opens over a live channel in the sidebar,
+ * as other Twitch extensions do: its thumbnail, or with `video` the stream itself, with its sound.
+ * While a preview plays with sound, the stream being watched is muted. Twitch's tooltip does not
+ * say which channel it is for, so we remember the card under the pointer (or keyboard focus) and
+ * only look for the tooltip while one is.
  */
-export function installSidebarPreviews(enabled: () => boolean): { check: () => void } {
+export function installSidebarPreviews(enabled: () => boolean, video: () => boolean): { check: () => void } {
   let login: string | null = null;
+  let holding = false;
+
+  /** Mutes the stream being watched while a preview plays with sound, through the page script. */
+  const syncMute = () => {
+    const held = document.querySelector(`.${PLAYING} > iframe[data-sound]`) !== null;
+    if (held === holding) return;
+    holding = held;
+    const message: HoldMute = { type: HOLD_MUTE, held };
+    window.postMessage(message, location.origin);
+  };
 
   const check = () => {
+    // No need to play the channel already playing in the page.
+    const withVideo = video() && login !== channelFromPath(location.pathname);
     for (const tooltip of document.querySelectorAll(SEL.sideNavTooltip)) {
       if (!login || !enabled()) {
         tooltip.querySelector(`:scope > .${PREVIEW}`)?.remove();
-      } else if (addPreview(tooltip, login) && tooltip.getBoundingClientRect().bottom > window.innerHeight) {
+      } else if (
+        addPreview(tooltip, login, withVideo) &&
+        tooltip.getBoundingClientRect().bottom > window.innerHeight
+      ) {
         // Twitch placed the tooltip for its shorter size. Its positioning library moves it back
         // into view on resize.
         window.dispatchEvent(new Event('resize'));
       }
     }
+    syncMute();
   };
+
+  // The embed reports its state as it loads and plays.
+  window.addEventListener('message', (e) => {
+    if (e.origin !== EMBED_ORIGIN) return;
+    const data = e.data as { namespace?: unknown; eventName?: unknown; params?: unknown } | null;
+    if (data?.namespace !== EMBED_NAMESPACE || data.eventName !== 'UPDATE_STATE') return;
+    const frame = [...document.querySelectorAll<HTMLIFrameElement>(`.${PREVIEW} > iframe`)].find(
+      (f) => f.contentWindow === e.source,
+    );
+    if (!frame) return;
+    const { playback, volume, muted } = (data.params ?? {}) as Record<string, unknown>;
+    const want = savedVolume();
+    const send = (eventName: number, params: unknown) =>
+      frame.contentWindow?.postMessage({ eventName, params, namespace: EMBED_NAMESPACE }, EMBED_ORIGIN);
+    // The embed keeps its own volume; play at the one the user picked on Twitch.
+    if (typeof volume === 'number' && Math.abs(volume - want.volume) > 0.01) send(EMBED_SET_VOLUME, want.volume);
+    // Only ever mute it: unmuting a video without a click would make the browser pause it.
+    if (muted === false && want.muted) send(EMBED_SET_MUTED, true);
+    if (typeof muted === 'boolean') frame.toggleAttribute('data-sound', !muted && !want.muted);
+    if (playback === 'Playing') frame.parentElement?.classList.add(PLAYING);
+    syncMute();
+  });
   document.addEventListener('mouseover', (e) => {
     login = sideNavLogin(e.target);
     if (login) check();
@@ -70,9 +168,10 @@ export function installSidebarPreviews(enabled: () => boolean): { check: () => v
     login = sideNavLogin(e.target) ?? login;
     if (login) check();
   });
-  // The tooltip opens a moment after the pointer lands on the card. No need to look while none is.
+  // The tooltip opens a moment after the pointer lands on the card, and closes when it leaves:
+  // the stream being watched gets its sound back then. No need to look otherwise.
   new MutationObserver(() => {
-    if (login) check();
+    if (login || holding) check();
   }).observe(document.body, { childList: true, subtree: true });
   return { check };
 }

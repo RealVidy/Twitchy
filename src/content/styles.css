@@ -275,20 +275,45 @@
   cursor: default;
 }
 
-/* Stream thumbnail at the top of Twitch's tooltip over a live channel in the sidebar. */
-.online-side-nav-channel-tooltip__body:has(> .twitchy-side-preview) {
+/* Stream preview at the top of Twitch's tooltip over a live channel in the sidebar: the thumbnail,
+   with the stream playing over it once it starts. */
+.online-side-nav-channel-tooltip__body:has(> .twitchy-side-preview),
+.side-nav-guest-star-tooltip__body:has(> .twitchy-side-preview) {
   width: 320px;
 }
 
 .twitchy-side-preview {
-  display: block;
-  width: 100%;
-  height: auto;
+  position: relative;
   aspect-ratio: 16 / 9;
   margin: 4px 0 6px;
+  overflow: hidden;
   border-radius: 4px;
   background: #0e0e10;
+}
+
+.twitchy-side-preview > img,
+.twitchy-side-preview > iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.twitchy-side-preview > img {
   object-fit: cover;
+}
+
+/* Hidden until the stream plays. The tooltip closes when the pointer leaves the card, so the
+   player must not catch the pointer. */
+.twitchy-side-preview > iframe {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms;
+}
+
+.twitchy-side-preview--playing > iframe {
+  opacity: 1;
 }
 
 /* The sidebar opened on hover keeps its collapsed place and lies over the page, so nothing moves. */

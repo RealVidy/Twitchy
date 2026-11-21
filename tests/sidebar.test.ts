@@ -1,12 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addPreview,
+  EMBED_NAMESPACE,
+  EMBED_ORIGIN,
+  EMBED_SET_MUTED,
+  EMBED_SET_VOLUME,
+  embedUrl,
   installSidebarPeek,
   installSidebarPreviews,
   PEEK_CLASS,
   previewUrl,
+  savedVolume,
   sideNavLogin,
 } from '../src/content/sidebar';
+import { HOLD_MUTE } from '../src/shared/volume';
 import { isolateListeners } from './helpers';
 
 /** Twitch's sidebar, trimmed: a collapsed card is an avatar in a link to the channel. */
@@ -41,7 +48,9 @@ function openTooltip(): HTMLElement {
   return document.querySelector('.online-side-nav-channel-tooltip__body')!;
 }
 
-const preview = () => document.querySelector<HTMLImageElement>('.twitchy-side-preview');
+const box = () => document.querySelector<HTMLElement>('.twitchy-side-preview');
+const preview = () => document.querySelector<HTMLImageElement>('.twitchy-side-preview > img');
+const frame = () => document.querySelector<HTMLIFrameElement>('.twitchy-side-preview > iframe');
 
 describe('previewUrl', () => {
   it("points at Twitch's live thumbnail and changes every minute", () => {
@@ -76,13 +85,70 @@ describe('addPreview', () => {
   it('puts one thumbnail at the top of the tooltip and keeps it up to date', () => {
     document.body.innerHTML = '';
     const tooltip = openTooltip();
-    expect(addPreview(tooltip, 'florence', NOW)).toBe(true);
-    expect(tooltip.firstElementChild).toBe(preview());
+    expect(addPreview(tooltip, 'florence', false, NOW)).toBe(true);
+    expect(tooltip.firstElementChild).toBe(box());
     expect(preview()!.getAttribute('src')).toBe(previewUrl('florence', NOW));
 
-    expect(addPreview(tooltip, 'zerator', NOW)).toBe(false);
+    expect(addPreview(tooltip, 'zerator', false, NOW)).toBe(false);
     expect(tooltip.querySelectorAll('.twitchy-side-preview')).toHaveLength(1);
     expect(preview()!.getAttribute('src')).toBe(previewUrl('zerator', NOW));
+    expect(frame()).toBeNull();
+  });
+
+  it("puts Twitch's player over the thumbnail, loading it again only for another channel", () => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    const tooltip = openTooltip();
+    addPreview(tooltip, 'florence', true, NOW);
+    expect(frame()!.src).toBe(embedUrl('florence', false));
+    expect(frame()!.allow).toBe('autoplay');
+    box()!.classList.add('twitchy-side-preview--playing');
+
+    addPreview(tooltip, 'florence', true, NOW + 60_000);
+    expect(box()!.classList.contains('twitchy-side-preview--playing')).toBe(true);
+
+    addPreview(tooltip, 'zerator', true, NOW);
+    expect(tooltip.querySelectorAll('iframe')).toHaveLength(1);
+    expect(frame()!.src).toBe(embedUrl('zerator', false));
+    expect(box()!.classList.contains('twitchy-side-preview--playing')).toBe(false);
+
+    addPreview(tooltip, 'zerator', false, NOW);
+    expect(frame()).toBeNull();
+  });
+});
+
+describe('embedUrl', () => {
+  it("asks for the channel's stream, playing at once, without controls", () => {
+    const url = new URL(embedUrl('florence', true, 'www.twitch.tv'));
+    expect(url.origin).toBe(EMBED_ORIGIN);
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      channel: 'florence',
+      parent: 'www.twitch.tv',
+      autoplay: 'true',
+      muted: 'true',
+      controls: 'false',
+    });
+  });
+});
+
+describe('savedVolume', () => {
+  const storage = (items: Record<string, string>) => ({ getItem: (k: string) => items[k] ?? null });
+
+  it('reads the volume and mute Twitch saved', () => {
+    expect(savedVolume(storage({ volume: '0.8', 'video-muted': '{"default":true}' }))).toEqual({
+      volume: 0.8,
+      muted: true,
+    });
+    expect(savedVolume(storage({ volume: '0', 'video-muted': '{"default":false}' }))).toEqual({
+      volume: 0,
+      muted: false,
+    });
+  });
+
+  it("falls back to Twitch's defaults when missing or broken", () => {
+    expect(savedVolume(storage({}))).toEqual({ volume: 0.5, muted: false });
+    expect(savedVolume(storage({ volume: 'loud', 'video-muted': '{' }))).toEqual({ volume: 0.5, muted: false });
+    expect(savedVolume(storage({ volume: '3', 'video-muted': 'null' }))).toEqual({ volume: 0.5, muted: false });
   });
 });
 
@@ -97,12 +163,21 @@ describe('installSidebarPreviews', () => {
     document.body = document.createElement('body');
     document.body.innerHTML = SIDEBAR;
     enabled = true;
-    previews = installSidebarPreviews(() => enabled);
+    previews = installSidebarPreviews(() => enabled, () => false);
   });
 
   it('adds the thumbnail of the hovered channel when Twitch opens its tooltip', async () => {
     hover(document.querySelector('img[alt="florence"]')!);
     openTooltip();
+    await vi.waitFor(() => expect(preview()?.src).toContain('live_user_florence-'));
+  });
+
+  it('adds it to the tooltip of channels streaming together too', async () => {
+    hover(document.querySelector('img[alt="florence"]')!);
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      '<div role="dialog"><div class="side-nav-guest-star-tooltip__body"><p>Florence</p></div></div>',
+    );
     await vi.waitFor(() => expect(preview()?.src).toContain('live_user_florence-'));
   });
 
@@ -162,6 +237,139 @@ describe('installSidebarPreviews', () => {
     previews.check();
     expect(resized).toHaveBeenCalledTimes(1);
     window.removeEventListener('resize', resized);
+  });
+});
+
+describe('installSidebarPreviews with the stream playing', () => {
+  let video: boolean;
+  let previews: { check: () => void };
+  let sent: unknown[];
+
+  isolateListeners();
+
+  beforeEach(() => {
+    document.body = document.createElement('body');
+    document.body.innerHTML = SIDEBAR;
+    localStorage.clear();
+    localStorage.setItem('volume', '0.8');
+    history.replaceState(null, '', '/');
+    video = true;
+    sent = [];
+    // Stands in for the page script, which mutes the stream for HOLD_MUTE.
+    window.addEventListener('message', (e) => {
+      if ((e.data as { type?: unknown } | null)?.type === HOLD_MUTE) sent.push(e.data);
+    });
+    previews = installSidebarPreviews(() => true, () => video);
+  });
+
+  // window.postMessage delivers later: let a test's messages arrive before the next one listens.
+  afterEach(() => new Promise((resolve) => setTimeout(resolve, 0)));
+
+  /** What the embed tells the page as it loads and plays. */
+  function report(params: Record<string, unknown>, from: Window | null = frame()!.contentWindow): void {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: EMBED_ORIGIN,
+        source: from,
+        data: { eventName: 'UPDATE_STATE', params, namespace: EMBED_NAMESPACE },
+      }),
+    );
+  }
+
+  async function openFor(login: string): Promise<HTMLIFrameElement> {
+    hover(document.querySelector(`img[alt="${login}"]`)!);
+    openTooltip();
+    await vi.waitFor(() => expect(frame()).not.toBeNull());
+    return frame()!;
+  }
+
+  const playing = () => box()!.classList.contains('twitchy-side-preview--playing');
+  const held = (on: boolean) => ({ type: HOLD_MUTE, held: on });
+
+  it('shows the stream once it plays and mutes the one being watched meanwhile', async () => {
+    const iframe = await openFor('florence');
+    expect(iframe.src).toBe(embedUrl('florence', false));
+    report({ playback: 'Buffering', muted: false, volume: 0.8 });
+    expect(playing()).toBe(false);
+    await Promise.resolve();
+    expect(sent).toEqual([]);
+
+    report({ playback: 'Playing', muted: false, volume: 0.8 });
+    expect(playing()).toBe(true);
+    await vi.waitFor(() => expect(sent).toEqual([held(true)]));
+
+    // Twitch closes its tooltip when the pointer leaves the card.
+    hover(document.querySelector('main img')!);
+    document.querySelector('.ReactModal__Content')!.remove();
+    await vi.waitFor(() => expect(sent).toEqual([held(true), held(false)]));
+  });
+
+  it("plays at the volume the user picked on Twitch's player", async () => {
+    const iframe = await openFor('florence');
+    const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    report({ playback: 'Idle', muted: false, volume: 0.5 });
+    expect(post).toHaveBeenCalledWith(
+      { eventName: EMBED_SET_VOLUME, params: 0.8, namespace: EMBED_NAMESPACE },
+      EMBED_ORIGIN,
+    );
+    post.mockClear();
+    report({ playback: 'Playing', muted: false, volume: 0.8 });
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('stays muted, and leaves the stream being watched alone, when Twitch is muted', async () => {
+    localStorage.setItem('video-muted', '{"default":true}');
+    const iframe = await openFor('florence');
+    expect(iframe.src).toBe(embedUrl('florence', true));
+    const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    report({ playback: 'Playing', muted: false, volume: 0.8 });
+    expect(post).toHaveBeenCalledWith(
+      { eventName: EMBED_SET_MUTED, params: true, namespace: EMBED_NAMESPACE },
+      EMBED_ORIGIN,
+    );
+    expect(playing()).toBe(true);
+    await Promise.resolve();
+    expect(sent).toEqual([]);
+  });
+
+  it('leaves the stream being watched alone when the browser only lets the preview play muted', async () => {
+    await openFor('florence');
+    report({ playback: 'Playing', muted: true, volume: 0.8 });
+    expect(playing()).toBe(true);
+    await Promise.resolve();
+    expect(sent).toEqual([]);
+  });
+
+  it('ignores messages that are not from its player', async () => {
+    await openFor('florence');
+    report({ playback: 'Playing', muted: false, volume: 0.8 }, window);
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: 'https://example.com',
+        source: frame()!.contentWindow,
+        data: { eventName: 'UPDATE_STATE', params: { playback: 'Playing' }, namespace: EMBED_NAMESPACE },
+      }),
+    );
+    expect(playing()).toBe(false);
+  });
+
+  it('shows only the thumbnail for the channel already playing in the page', async () => {
+    history.replaceState(null, '', '/florence');
+    hover(document.querySelector('img[alt="florence"]')!);
+    openTooltip();
+    await vi.waitFor(() => expect(preview()).not.toBeNull());
+    expect(frame()).toBeNull();
+    history.replaceState(null, '', '/');
+  });
+
+  it('stops the stream and gives the sound back when the video is turned off', async () => {
+    await openFor('florence');
+    report({ playback: 'Playing', muted: false, volume: 0.8 });
+    video = false;
+    previews.check();
+    expect(frame()).toBeNull();
+    expect(preview()).not.toBeNull();
+    await vi.waitFor(() => expect(sent.at(-1)).toEqual(held(false)));
   });
 });
 

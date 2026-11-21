@@ -24,6 +24,8 @@ export interface Settings {
   videoStats: boolean;
   /** Shows the stream's thumbnail when hovering a live channel in the sidebar. */
   sidebarPreviews: boolean;
+  /** Plays the stream itself, with its sound, in that preview, and mutes the stream being watched meanwhile. */
+  sidebarPreviewVideo: boolean;
   /** Opens the collapsed sidebar while the pointer rests on it. */
   sidebarExpandOnHover: boolean;
   /** The mouse wheel over the player turns the volume, past 100% for quiet channels. */
@@ -46,6 +48,7 @@ export const DEFAULT_SETTINGS: Settings = {
   skipContentWarning: true,
   videoStats: true,
   sidebarPreviews: true,
+  sidebarPreviewVideo: true,
   sidebarExpandOnHover: true,
   volumeWheel: true,
   hideLockedEmotes: true,
@@ -85,6 +88,7 @@ export function normalizeSettings(raw: unknown): Settings {
     skipContentWarning: bool(r.skipContentWarning, DEFAULT_SETTINGS.skipContentWarning),
     videoStats: bool(r.videoStats, DEFAULT_SETTINGS.videoStats),
     sidebarPreviews: bool(r.sidebarPreviews, DEFAULT_SETTINGS.sidebarPreviews),
+    sidebarPreviewVideo: bool(r.sidebarPreviewVideo, DEFAULT_SETTINGS.sidebarPreviewVideo),
     sidebarExpandOnHover: bool(r.sidebarExpandOnHover, DEFAULT_SETTINGS.sidebarExpandOnHover),
     volumeWheel: bool(r.volumeWheel, DEFAULT_SETTINGS.volumeWheel),
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),

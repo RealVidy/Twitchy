@@ -34,3 +34,14 @@ export function normalizeBoost(raw: unknown): number {
   const n = Number(raw);
   return Number.isFinite(n) && n > 1 ? Math.min(MAX_LEVEL, round(n)) : 1;
 }
+
+/**
+ * Asks the page script to mute the stream while a sidebar preview plays with sound (`held`), and
+ * to give its sound back afterwards.
+ */
+export const HOLD_MUTE = 'twitchy:hold-mute';
+
+export interface HoldMute {
+  type: typeof HOLD_MUTE;
+  held: boolean;
+}

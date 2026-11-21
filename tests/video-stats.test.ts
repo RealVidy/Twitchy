@@ -26,6 +26,7 @@ function fakePlayer(overrides: Partial<IvsPlayer> = {}): IvsPlayer {
   return {
     setVolume: () => {},
     setMuted: () => {},
+    isMuted: () => false,
     getState: () => 'Playing',
     isPaused: () => false,
     getLiveLatency: () => 3.527,

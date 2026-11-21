@@ -42,7 +42,11 @@ const live = new SevenTvLiveUpdates((update) => {
 const bonus = installBonusClaimer(() => settingsLoaded && settings.autoClaimPoints);
 const contentGate = installContentGateSkipper(() => settingsLoaded && settings.skipContentWarning);
 const videoStats = installVideoStats(() => settings.videoStats);
-const sidebarPreviews = installSidebarPreviews(() => settings.sidebarPreviews);
+// Not before the settings are in: it would mute the stream for someone who turned the video off.
+const sidebarPreviews = installSidebarPreviews(
+  () => settings.sidebarPreviews,
+  () => settingsLoaded && settings.sidebarPreviewVideo,
+);
 // Not before the settings are in: it would open the sidebar for someone who turned this off.
 const sidebarPeek = installSidebarPeek(() => settingsLoaded && settings.sidebarExpandOnHover);
 // Not before the settings are in: a saved boost would be applied for someone who turned this off.

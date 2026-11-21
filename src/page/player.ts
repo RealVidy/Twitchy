@@ -5,6 +5,7 @@ import type { PlayerStats } from '../shared/player-stats';
 export interface IvsPlayer {
   setVolume(volume: number): void;
   setMuted(muted: boolean): void;
+  isMuted(): boolean;
   getState(): string;
   isPaused(): boolean;
   getLiveLatency(): number;
@@ -53,4 +54,30 @@ export function readStats(player: IvsPlayer | null): PlayerStats | null {
   } catch {
     return null; // Twitch changed its player: show nothing rather than break the page
   }
+}
+
+/**
+ * Mutes the stream while a sidebar preview plays, then unmutes it, but only if we were the ones
+ * who muted it. The mute goes through the player, not Twitch's saved setting, so a reload keeps
+ * the user's own choice.
+ */
+export function createMuteHold(find: () => IvsPlayer | null = findPlayer): (held: boolean) => void {
+  let muted: IvsPlayer | null = null;
+  return (held) => {
+    try {
+      if (held) {
+        if (muted) return;
+        const player = find();
+        if (!player || player.isMuted()) return;
+        player.setMuted(true);
+        muted = player;
+      } else if (muted) {
+        const player = muted;
+        muted = null;
+        if (player.isMuted()) player.setMuted(false);
+      }
+    } catch {
+      // Twitch changed its player: leave the sound alone rather than break the page.
+    }
+  };
 }
