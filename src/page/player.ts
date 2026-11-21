@@ -6,6 +6,7 @@ export interface IvsPlayer {
   setVolume(volume: number): void;
   setMuted(muted: boolean): void;
   isMuted(): boolean;
+  getVolume(): number;
   getState(): string;
   isPaused(): boolean;
   getLiveLatency(): number;
@@ -80,4 +81,18 @@ export function createMuteHold(find: () => IvsPlayer | null = findPlayer): (held
       // Twitch changed its player: leave the sound alone rather than break the page.
     }
   };
+}
+
+/**
+ * Mutes the stream, or unmutes it at the volume it had, as Twitch's mute button does. Returns the
+ * new state, or null when there is no player.
+ */
+export function toggleMute(player: IvsPlayer | null): { muted: boolean; volume: number } | null {
+  if (!player) return null;
+  try {
+    player.setMuted(!player.isMuted());
+    return { muted: player.isMuted(), volume: player.getVolume() };
+  } catch {
+    return null; // Twitch changed its player: leave the sound alone rather than break the page
+  }
 }

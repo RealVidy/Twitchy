@@ -22,6 +22,7 @@ const sidebarPreviews = form.elements.namedItem('sidebarPreviews') as HTMLInputE
 const sidebarPreviewVideo = form.elements.namedItem('sidebarPreviewVideo') as HTMLInputElement;
 const sidebarExpandOnHover = form.elements.namedItem('sidebarExpandOnHover') as HTMLInputElement;
 const volumeWheel = form.elements.namedItem('volumeWheel') as HTMLInputElement;
+const clickToMute = form.elements.namedItem('clickToMute') as HTMLInputElement;
 const hideLockedEmotes = form.elements.namedItem('hideLockedEmotes') as HTMLInputElement;
 const hideSendButton = form.elements.namedItem('hideSendButton') as HTMLInputElement;
 const badgeBoxes = Object.fromEntries(
@@ -46,6 +47,7 @@ function show(s: Settings): void {
   sidebarPreviewVideo.disabled = !s.sidebarPreviews;
   sidebarExpandOnHover.checked = s.sidebarExpandOnHover;
   volumeWheel.checked = s.volumeWheel;
+  clickToMute.checked = s.clickToMute;
   hideLockedEmotes.checked = s.hideLockedEmotes;
   hideSendButton.checked = s.hideSendButton;
   for (const k of BADGE_KINDS) badgeBoxes[k].checked = s.badges[k];
@@ -66,6 +68,7 @@ form.addEventListener('change', async () => {
       sidebarPreviewVideo: sidebarPreviewVideo.checked,
       sidebarExpandOnHover: sidebarExpandOnHover.checked,
       volumeWheel: volumeWheel.checked,
+      clickToMute: clickToMute.checked,
       hideLockedEmotes: hideLockedEmotes.checked,
       hideSendButton: hideSendButton.checked,
       badges: Object.fromEntries(BADGE_KINDS.map((k) => [k, badgeBoxes[k].checked])) as Record<BadgeKind, boolean>,

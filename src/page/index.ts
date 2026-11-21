@@ -1,9 +1,18 @@
 // Runs in Twitch's own page (MAIN world), the only place that can reach its player.
 // It answers the content script's requests: it reads the player for the video stats, sets its
-// volume for the mouse wheel and mutes it while a sidebar preview plays.
+// volume for the mouse wheel, mutes or unmutes it on a click and mutes it while a sidebar preview
+// plays.
 import { STATS_REPLY, STATS_REQUEST, type StatsReply } from '../shared/player-stats';
-import { HOLD_MUTE, SET_VOLUME, type HoldMute, type SetVolume } from '../shared/volume';
-import { createMuteHold, findPlayer, readStats } from './player';
+import {
+  HOLD_MUTE,
+  MUTE_TOGGLED,
+  SET_VOLUME,
+  TOGGLE_MUTE,
+  type HoldMute,
+  type MuteToggled,
+  type SetVolume,
+} from '../shared/volume';
+import { createMuteHold, findPlayer, readStats, toggleMute } from './player';
 
 const holdMute = createMuteHold();
 
@@ -15,6 +24,12 @@ window.addEventListener('message', (e) => {
     window.postMessage(reply, location.origin);
   } else if (data?.type === SET_VOLUME) {
     setVolume(data as Partial<SetVolume>);
+  } else if (data?.type === TOGGLE_MUTE) {
+    const state = toggleMute(findPlayer());
+    if (!state) return;
+    saveMuted(state.muted);
+    const reply: MuteToggled = { type: MUTE_TOGGLED, ...state };
+    window.postMessage(reply, location.origin);
   } else if (data?.type === HOLD_MUTE) {
     const { held } = data as Partial<HoldMute>;
     if (typeof held === 'boolean') holdMute(held);
@@ -37,6 +52,11 @@ function setVolume({ volume, muted }: Partial<SetVolume>): void {
 /** Saves the volume where Twitch's own slider and mute button do, so it is kept on reload. */
 export function saveVolume(volume: number, muted: boolean): void {
   localStorage.setItem('volume', String(volume));
+  saveMuted(muted);
+}
+
+/** Saves the muted state where Twitch's mute button does, so it is kept on reload. */
+export function saveMuted(muted: boolean): void {
   const stored = JSON.parse(localStorage.getItem('video-muted') ?? '{}') as unknown;
   const flags = stored && typeof stored === 'object' ? (stored as Record<string, unknown>) : {};
   if (flags.default !== muted) localStorage.setItem('video-muted', JSON.stringify({ ...flags, default: muted }));

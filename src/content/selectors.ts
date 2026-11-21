@@ -51,7 +51,12 @@ export const SEL = {
   videoPlayer: '[data-a-target="video-player"]',
   /** The stream's own video; the page has other, paused ones for previews. */
   playerVideo: '[data-a-target="video-player"] video',
-  /** Menus and dialogs inside the player, which scroll with the wheel themselves. */
+  /** Covers the video under the controls; Twitch goes full screen when it is double-clicked. */
+  playerClickHandler: '[data-a-target="player-overlay-click-handler"]',
+  /**
+   * The player's menus and dialogs, which scroll with the wheel themselves. Twitch puts the settings
+   * menu at the end of the page, not inside the player, and closes it on pointerdown.
+   */
   playerMenu: '[role="menu"], [role="dialog"], [data-a-target="player-settings-menu"]',
   /** The stream's uptime, next to the viewer count under the player. */
   liveTime: '.live-time',

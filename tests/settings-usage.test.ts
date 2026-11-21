@@ -24,6 +24,7 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ sidebarPreviewVideo: false }).sidebarPreviewVideo).toBe(false);
     expect(normalizeSettings({ sidebarExpandOnHover: false }).sidebarExpandOnHover).toBe(false);
     expect(normalizeSettings({ volumeWheel: false }).volumeWheel).toBe(false);
+    expect(normalizeSettings({ clickToMute: false }).clickToMute).toBe(false);
   });
 
   it('shows only gift sub badges by default and keeps the badge choices made', () => {

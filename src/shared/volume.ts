@@ -45,3 +45,19 @@ export interface HoldMute {
   type: typeof HOLD_MUTE;
   held: boolean;
 }
+
+/** Asks the page script to mute the stream, or unmute it at its volume, as Twitch's mute button does. */
+export const TOGGLE_MUTE = 'twitchy:toggle-mute';
+/** The page script's answer to TOGGLE_MUTE. */
+export const MUTE_TOGGLED = 'twitchy:mute-toggled';
+
+export interface ToggleMute {
+  type: typeof TOGGLE_MUTE;
+}
+
+export interface MuteToggled {
+  type: typeof MUTE_TOGGLED;
+  muted: boolean;
+  /** Twitch's volume, 0 to 1, which it keeps while muted. */
+  volume: number;
+}

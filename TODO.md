@@ -9,4 +9,4 @@
 - [x] Sidebar thumbnail and expand on hover
 - [x] Increase volume past limit with mouse wheel for streams that are too quiet. Remember that max sound setting for each streamer
 - [x] Have the thumbnail on the sidebar be the actual stream video and sound. Mute the current stream when that is displayed
-- [ ] Allow for clicking on the stream to mute/unmute
+- [x] Allow for clicking on the stream to mute/unmute

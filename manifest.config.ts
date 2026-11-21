@@ -24,8 +24,8 @@ export default defineManifest({
       run_at: 'document_idle',
     },
     {
-      // Reads Twitch's player for the video stats, sets its volume for the mouse wheel and mutes it
-      // while a sidebar preview plays; our isolated content script cannot reach it.
+      // Reads Twitch's player for the video stats, sets its volume for the mouse wheel, mutes it on a
+      // click and while a sidebar preview plays; our isolated content script cannot reach it.
       matches: ['https://www.twitch.tv/*'],
       js: ['src/page/index.ts'],
       run_at: 'document_idle',

@@ -246,7 +246,7 @@ describe('VolumeBoost', () => {
     await boost.switchChannel('quiet');
     wheel('up');
     expect(ctx.createMediaElementSource).not.toHaveBeenCalled();
-    expect(indicator()?.textContent).toBe('110% · click the player to boost');
+    expect(indicator()?.textContent).toBe('110% · click the page to boost');
 
     // The user clicks: the browser lets the context run.
     ctx.resume = vi.fn(async () => {

@@ -43,7 +43,6 @@ export class VolumeBoost {
   private taken = new WeakSet<HTMLMediaElement>();
   private wheel = 0;
   private last = { level: 0, at: -Infinity };
-  private hideTimer = 0;
 
   constructor(
     private storage: BoostStorage,
@@ -157,16 +156,28 @@ export class VolumeBoost {
 
   /** A short "150%" over the player, since Twitch's slider stops at 100%. */
   private show(player: Element, level: number): void {
-    let el = player.querySelector<HTMLElement>(`.${INDICATOR}`);
-    if (!el) {
-      el = document.createElement('div');
-      el.className = INDICATOR;
-      player.append(el);
-    }
-    const percent = `${Math.round(level * 100)}%`;
-    el.textContent = this.waiting ? `${percent} · click the player to boost` : percent;
-    el.classList.add(`${INDICATOR}--visible`);
-    window.clearTimeout(this.hideTimer);
-    this.hideTimer = window.setTimeout(() => el.classList.remove(`${INDICATOR}--visible`), INDICATOR_MS);
+    const percent = formatLevel(level);
+    showIndicator(player, this.waiting ? `${percent} · click the page to boost` : percent);
   }
+}
+
+/** A level as the indicator shows it: 1.5 is "150%". */
+export function formatLevel(level: number): string {
+  return `${Math.round(level * 100)}%`;
+}
+
+let hideTimer = 0;
+
+/** Shows `text` over the player for a moment: the volume, or that it is muted. */
+export function showIndicator(player: Element, text: string): void {
+  let el = player.querySelector<HTMLElement>(`.${INDICATOR}`);
+  if (!el) {
+    el = document.createElement('div');
+    el.className = INDICATOR;
+    player.append(el);
+  }
+  el.textContent = text;
+  el.classList.add(`${INDICATOR}--visible`);
+  window.clearTimeout(hideTimer);
+  hideTimer = window.setTimeout(() => el.classList.remove(`${INDICATOR}--visible`), INDICATOR_MS);
 }

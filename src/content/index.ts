@@ -13,6 +13,7 @@ import {
 import { installAutocomplete } from './autocomplete';
 import { installBonusClaimer } from './channel-points';
 import { channelFromPath } from './channel';
+import { installClickToMute } from './click-mute';
 import { installContentGateSkipper } from './content-gate';
 import { ColonComplete } from './colon-complete';
 import { ChatObserver } from './chat-observer';
@@ -102,6 +103,8 @@ window.addEventListener('popstate', checkLocation);
 window.addEventListener('pagehide', () => void usage.flush());
 window.setInterval(checkLocation, 1000);
 volume.start();
+// Not before the settings are in: a click would mute the stream for someone who turned this off.
+installClickToMute(() => settingsLoaded && settings.clickToMute, () => volume.gain);
 checkLocation();
 chat.start();
 installTooltip();
