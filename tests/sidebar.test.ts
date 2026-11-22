@@ -201,6 +201,21 @@ describe('installSidebarPreviews', () => {
     expect(preview()!.src).toContain('live_user_zerator-');
   });
 
+  it('hides them when the pointer leaves the window from the card', async () => {
+    const root = document.documentElement;
+    hover(document.querySelector('img[alt="florence"]')!);
+    root.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(root.classList.contains(TOOLTIP_GONE)).toBe(true);
+    // Twitch opens its tooltip late, after the pointer has gone.
+    openTooltip();
+    await Promise.resolve();
+    expect(preview()).toBeNull();
+
+    hover(document.querySelector('img[alt="florence"]')!);
+    expect(root.classList.contains(TOOLTIP_GONE)).toBe(false);
+    expect(preview()!.src).toContain('live_user_florence-');
+  });
+
   it('leaves the tooltip to Twitch while turned off', () => {
     enabled = false;
     hover(document.querySelector('img[alt="florence"]')!);

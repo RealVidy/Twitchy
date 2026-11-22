@@ -150,14 +150,18 @@ export function installSidebarPreviews(enabled: () => boolean, video: () => bool
     if (playback === 'Playing') frame.parentElement?.classList.add(PLAYING);
     syncMute();
   });
-  document.addEventListener('mouseover', (e) => {
+  const pointAt = (target: EventTarget | null) => {
     const was = login;
-    login = sideNavLogin(e.target);
+    login = sideNavLogin(target);
     // Twitch keeps its tooltip a moment after the pointer leaves the card, and as long as the
     // pointer is over it, in the way of the pointer. Hide it and stop the preview right away.
     root.classList.toggle(TOOLTIP_GONE, !login && enabled());
     if (login || was) check();
-  });
+  };
+  document.addEventListener('mouseover', (e) => pointAt(e.target));
+  // Leaving the window from the card brings no mouseover elsewhere, and Twitch may still open
+  // its tooltip after the pointer has gone.
+  root.addEventListener('mouseleave', () => pointAt(null));
   // Twitch moves the focus into its tooltip when it opens, so only a card getting focus counts.
   document.addEventListener('focusin', (e) => {
     login = sideNavLogin(e.target) ?? login;
