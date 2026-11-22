@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { badgeKindOf, countWanted, readTwitchCount } from '../src/content/notification-badges';
+import { NotificationBadges, badgeKindOf, countWanted, readTwitchCount, titleWithout } from '../src/content/notification-badges';
 import { fetchNotifications, type NotificationsSummary } from '../src/providers/twitch';
 import { DEFAULT_SETTINGS } from '../src/shared/settings';
 
@@ -50,6 +50,40 @@ describe('readTwitchCount', () => {
     expect(readTwitchCount(bell)).toBe(0);
     bell.innerHTML = '<div class="tw-number-badge"><div class="tw-number-badge__badge">12</div></div>';
     expect(readTwitchCount(bell)).toBe(12);
+  });
+});
+
+describe('titleWithout', () => {
+  it('takes the hidden notifications off the count', () => {
+    expect(titleWithout('(3) Twitch', 3, 2, 0)).toBe('(1) Twitch');
+    expect(titleWithout('(3) Twitch', 3, 3, 0)).toBe('Twitch');
+    expect(titleWithout('(3) Twitch', 3, 0, 0)).toBe('(3) Twitch');
+    expect(titleWithout('Twitch', 0, 0, 2)).toBe('Twitch');
+  });
+
+  it('only takes whispers off when the title counts them', () => {
+    expect(titleWithout('(5) Twitch', 3, 0, 2)).toBe('(3) Twitch');
+    expect(titleWithout('(3) Twitch', 3, 0, 2)).toBe('(3) Twitch');
+    expect(titleWithout('(5) Twitch', 3, 3, 2)).toBe('Twitch');
+  });
+});
+
+describe('NotificationBadges', () => {
+  it('keeps the hidden notifications out of the tab title, even when Twitch sets it again', async () => {
+    document.body.innerHTML =
+      '<div class="onsite-notifications"><button></button><div class="tw-number-badge">3</div></div>';
+    document.title = '(3) Twitch';
+    const off = { giftSubs: false, drops: false, streaks: false, promotions: false, other: false, whispers: true };
+    const badges = new NotificationBadges(() => ({ ...DEFAULT_SETTINGS, badges: off }), async () => {
+      throw new Error('not needed');
+    });
+    badges.start();
+    badges.update();
+    expect(document.title).toBe('Twitch');
+
+    document.title = '(4) Somebody - Twitch';
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.title).toBe('(1) Somebody - Twitch');
   });
 });
 

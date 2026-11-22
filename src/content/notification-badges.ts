@@ -42,6 +42,21 @@ export function readTwitchCount(bell: Element | null): number {
   return Number.isFinite(n) ? n : 1;
 }
 
+/**
+ * The tab title without the hidden notifications in the count Twitch puts in front of it,
+ * e.g. "(3) Twitch" → "(1) Twitch". `bellCount` is what Twitch counts on the bell: whatever the
+ * title counts beyond it is whispers.
+ */
+export function titleWithout(title: string, bellCount: number, hiddenBell: number, hiddenWhispers: number): string {
+  const match = /^\((\d+)\+?\)\s*/.exec(title);
+  if (!match) return title;
+  const count = parseInt(match[1], 10);
+  const whispers = Math.min(hiddenWhispers, Math.max(0, count - bellCount));
+  const left = count - Math.min(hiddenBell, bellCount) - whispers;
+  const rest = title.slice(match[0].length);
+  return left > 0 ? `(${left}) ${rest}` : rest;
+}
+
 function authToken(): string | null {
   const match = /(?:^|;\s*)auth-token=([^;]+)/.exec(document.cookie);
   return match ? decodeURIComponent(match[1]) : null;
@@ -51,7 +66,8 @@ const RECHECK_MS = 5 * 60_000;
 
 /**
  * Replaces Twitch's red count on the bell with one that only counts the kinds of notifications
- * chosen in the settings, and hides the whispers count unless wanted.
+ * chosen in the settings, and hides the whispers count unless wanted. The count in the tab title
+ * leaves out the hidden ones too.
  */
 export class NotificationBadges {
   private summary: NotificationsSummary | null = null;
@@ -59,6 +75,9 @@ export class NotificationBadges {
   private failed = false;
   private loading = false;
   private queued = false;
+  /** The title as Twitch last set it, before we took the hidden notifications off its count. */
+  private twitchTitle = '';
+  private titleObserver: MutationObserver | null = null;
 
   constructor(
     private readonly settings: () => Settings,
@@ -72,6 +91,13 @@ export class NotificationBadges {
   }
 
   start(): void {
+    this.twitchTitle = document.title;
+    this.titleObserver = new MutationObserver(() => {
+      // Our own changes are taken out of the records right away, so this is Twitch.
+      this.twitchTitle = document.title;
+      this.render();
+    });
+    this.titleObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
     new MutationObserver(() => {
       if (this.queued) return;
       this.queued = true;
@@ -137,8 +163,17 @@ export class NotificationBadges {
     root.classList.toggle('twitchy-hide-whispers-badge', !s.badges.whispers);
 
     const bell = document.querySelector(SEL.notifications);
-    if (!bell) return;
     const count = mode === 'filter' && !this.failed && this.summary ? countWanted(this.summary, s.badges) : 0;
+    const bellCount = readTwitchCount(bell);
+    const bellHidden = mode === 'none' || (mode === 'filter' && !this.failed);
+    const whispers = document.querySelector('.twitchy-whispers') ?? document.querySelector(SEL.whispersButton);
+    this.renderTitle(
+      bellCount,
+      bellHidden ? Math.max(0, bellCount - count) : 0,
+      s.badges.whispers ? 0 : readTwitchCount(whispers),
+    );
+
+    if (!bell) return;
     let badge = bell.querySelector<HTMLElement>('.twitchy-bell-count');
     if (count === 0) {
       badge?.remove();
@@ -151,5 +186,13 @@ export class NotificationBadges {
     }
     const text = count > 99 ? '99+' : String(count);
     if (badge.textContent !== text) badge.textContent = text;
+  }
+
+  private renderTitle(bellCount: number, hiddenBell: number, hiddenWhispers: number): void {
+    if (!this.titleObserver) return;
+    const title = titleWithout(this.twitchTitle, bellCount, hiddenBell, hiddenWhispers);
+    if (document.title === title) return;
+    document.title = title;
+    this.titleObserver.takeRecords();
   }
 }
