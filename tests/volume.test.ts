@@ -1,7 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VolumeBoost, type AudioContextLike, type BoostStorage } from '../src/content/volume';
-import { createMuteHold, type IvsPlayer } from '../src/page/player';
-import { HOLD_MUTE, MAX_LEVEL, normalizeBoost, SET_VOLUME, splitLevel, stepLevel } from '../src/shared/volume';
+import { createMuteHold, streamSound, type IvsPlayer } from '../src/page/player';
+import {
+  HOLD_MUTE,
+  MAX_LEVEL,
+  normalizeBoost,
+  SET_VOLUME,
+  splitLevel,
+  stepLevel,
+  STREAM_SOUND,
+  STREAM_SOUND_REQUEST,
+} from '../src/shared/volume';
 import { isolateListeners } from './helpers';
 
 describe('stepLevel', () => {
@@ -333,6 +342,38 @@ describe('the page script', () => {
     expect(localStorage.getItem('video-muted')).toBeNull();
   });
 
+  it("tells sidebar previews how the user has the stream, not counting the mute held for one", async () => {
+    await import('../src/page/index');
+    document.body.innerHTML = '<div data-a-target="video-player"></div>';
+    let muted = false;
+    const player = {
+      setMuted: (m: boolean) => void (muted = m),
+      isMuted: () => muted,
+      getVolume: () => 0.4,
+      getState: () => 'Playing',
+      isPaused: () => false,
+      getLiveLatency: () => 0,
+    };
+    const fiber = { return: null, memoizedProps: { mediaPlayerInstance: player } };
+    Object.assign(document.querySelector('[data-a-target="video-player"]')!, { __reactFiber$abc: fiber });
+    const replies: unknown[] = [];
+    const listen = (e: MessageEvent) => {
+      if ((e.data as { type?: unknown } | null)?.type === STREAM_SOUND) replies.push(e.data);
+    };
+    window.addEventListener('message', listen);
+    const send = (data: unknown) => window.dispatchEvent(new MessageEvent('message', { data, source: window }));
+    try {
+      send({ type: HOLD_MUTE, held: true });
+      expect(muted).toBe(true);
+      send({ type: STREAM_SOUND_REQUEST });
+      await vi.waitFor(() => expect(replies).toEqual([{ type: STREAM_SOUND, sound: { muted: false, volume: 0.4 } }]));
+      send({ type: HOLD_MUTE, held: false });
+      expect(muted).toBe(false);
+    } finally {
+      window.removeEventListener('message', listen);
+    }
+  });
+
   it('saves the volume where Twitch does, keeping its other mute flags', async () => {
     const { saveVolume } = await import('../src/page/index');
     localStorage.clear();
@@ -343,12 +384,36 @@ describe('the page script', () => {
   });
 });
 
+describe('streamSound', () => {
+  function player(state: string, muted: boolean, volume = 0.6) {
+    return { getState: () => state, isPaused: () => state === 'Paused', isMuted: () => muted, getVolume: () => volume };
+  }
+  const sound = (p: object | null, held = false) => streamSound(p as IvsPlayer | null, held);
+
+  it('says whether the playing stream is muted, and at what volume', () => {
+    expect(sound(player('Playing', false))).toEqual({ muted: false, volume: 0.6 });
+    expect(sound(player('Buffering', true))).toEqual({ muted: true, volume: 0.6 });
+  });
+
+  it('counts a mute held for a sidebar preview as unmuted', () => {
+    expect(sound(player('Playing', true), true)).toEqual({ muted: false, volume: 0.6 });
+  });
+
+  it('says nothing without a playing stream or with a broken player', () => {
+    expect(sound(null)).toBeNull();
+    expect(sound(player('Paused', false))).toBeNull();
+    expect(sound(player('Idle', false))).toBeNull();
+    expect(sound(player('Playing', false, NaN))).toBeNull();
+    expect(sound({ getState: () => { throw new Error('changed'); } })).toBeNull();
+  });
+});
+
 describe('createMuteHold', () => {
   function player(muted: boolean) {
     const p = { muted, setMuted: vi.fn((m: boolean) => void (p.muted = m)), isMuted: () => p.muted };
     return p;
   }
-  const hold = (p: ReturnType<typeof player> | null) => createMuteHold(() => p as unknown as IvsPlayer | null);
+  const hold = (p: ReturnType<typeof player> | null) => createMuteHold(() => p as unknown as IvsPlayer | null).set;
 
   it('mutes the stream and gives its sound back afterwards', () => {
     const p = player(false);
@@ -376,6 +441,16 @@ describe('createMuteHold', () => {
     p.muted = false;
     set(false);
     expect(p.setMuted).toHaveBeenCalledTimes(1);
+  });
+
+  it('says whether it holds the stream muted', () => {
+    const p = player(false);
+    const hold = createMuteHold(() => p as unknown as IvsPlayer);
+    expect(hold.holding()).toBe(false);
+    hold.set(true);
+    expect(hold.holding()).toBe(true);
+    hold.set(false);
+    expect(hold.holding()).toBe(false);
   });
 
   it('does nothing without a player', () => {

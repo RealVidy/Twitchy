@@ -14,7 +14,7 @@ import {
   sideNavLogin,
 } from '../src/content/sidebar';
 import { PREVIEW_FRAME_NAME } from '../src/embed/embedded';
-import { HOLD_MUTE, savedVolume } from '../src/shared/volume';
+import { HOLD_MUTE, savedVolume, STREAM_SOUND, STREAM_SOUND_REQUEST } from '../src/shared/volume';
 import { isolateListeners } from './helpers';
 
 /** Twitch's sidebar, trimmed: a collapsed card is an avatar in a link to the channel. */
@@ -86,11 +86,11 @@ describe('addPreview', () => {
   it('puts one thumbnail at the top of the tooltip and keeps it up to date', () => {
     document.body.innerHTML = '';
     const tooltip = openTooltip();
-    expect(addPreview(tooltip, 'florence', false, NOW)).toBe(true);
+    expect(addPreview(tooltip, 'florence', null, NOW)).toBe(true);
     expect(tooltip.firstElementChild).toBe(box());
     expect(preview()!.getAttribute('src')).toBe(previewUrl('florence', NOW));
 
-    expect(addPreview(tooltip, 'zerator', false, NOW)).toBe(false);
+    expect(addPreview(tooltip, 'zerator', null, NOW)).toBe(false);
     expect(tooltip.querySelectorAll('.twitchy-side-preview')).toHaveLength(1);
     expect(preview()!.getAttribute('src')).toBe(previewUrl('zerator', NOW));
     expect(frame()).toBeNull();
@@ -100,21 +100,21 @@ describe('addPreview', () => {
     document.body.innerHTML = '';
     localStorage.clear();
     const tooltip = openTooltip();
-    addPreview(tooltip, 'florence', true, NOW);
+    addPreview(tooltip, 'florence', { muted: false }, NOW);
     expect(frame()!.src).toBe(embedUrl('florence', false));
     expect(frame()!.allow).toBe('autoplay');
     expect(frame()!.name).toBe(PREVIEW_FRAME_NAME);
     box()!.classList.add('twitchy-side-preview--playing');
 
-    addPreview(tooltip, 'florence', true, NOW + 60_000);
+    addPreview(tooltip, 'florence', { muted: false }, NOW + 60_000);
     expect(box()!.classList.contains('twitchy-side-preview--playing')).toBe(true);
 
-    addPreview(tooltip, 'zerator', true, NOW);
+    addPreview(tooltip, 'zerator', { muted: true }, NOW);
     expect(tooltip.querySelectorAll('iframe')).toHaveLength(1);
-    expect(frame()!.src).toBe(embedUrl('zerator', false));
+    expect(frame()!.src).toBe(embedUrl('zerator', true));
     expect(box()!.classList.contains('twitchy-side-preview--playing')).toBe(false);
 
-    addPreview(tooltip, 'zerator', false, NOW);
+    addPreview(tooltip, 'zerator', null, NOW);
     expect(frame()).toBeNull();
   });
 });
@@ -375,11 +375,87 @@ describe('installSidebarPreviews with the stream playing', () => {
   });
 
   it('leaves the stream being watched alone when the browser only lets the preview play muted', async () => {
-    await openFor('florence');
+    const iframe = await openFor('florence');
+    const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
     report({ playback: 'Playing', muted: true, volume: 0.8 });
     expect(playing()).toBe(true);
+    // Unmuting it before a click in the page would make the browser pause it.
+    expect(post).not.toHaveBeenCalled();
     await Promise.resolve();
     expect(sent).toEqual([]);
+  });
+
+  it('gives the preview its sound once the user clicked in the page', async () => {
+    Object.defineProperty(navigator, 'userActivation', { value: { hasBeenActive: true }, configurable: true });
+    try {
+      const iframe = await openFor('florence');
+      const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+      report({ playback: 'Buffering', muted: true, volume: 0.8 });
+      expect(post).not.toHaveBeenCalled();
+      report({ playback: 'Playing', muted: true, volume: 0.8 });
+      expect(post).toHaveBeenCalledWith(
+        { eventName: EMBED_SET_MUTED, params: false, namespace: EMBED_NAMESPACE },
+        EMBED_ORIGIN,
+      );
+      report({ playback: 'Playing', muted: false, volume: 0.8 });
+      await vi.waitFor(() => expect(sent).toEqual([held(true)]));
+    } finally {
+      delete (navigator as { userActivation?: unknown }).userActivation;
+    }
+  });
+
+  /** Stands in for the page script, which says how the user has the stream in the page. */
+  function streamIs(sound: { muted: boolean; volume: number } | null): () => number {
+    let asked = 0;
+    window.addEventListener('message', (e) => {
+      if ((e.data as { type?: unknown } | null)?.type !== STREAM_SOUND_REQUEST) return;
+      asked++;
+      window.dispatchEvent(new MessageEvent('message', { data: { type: STREAM_SOUND, sound }, source: window }));
+    });
+    return () => asked;
+  }
+
+  async function openAfterAnswer(login: string, asked: () => number): Promise<HTMLIFrameElement> {
+    hover(document.querySelector(`img[alt="${login}"]`)!);
+    // Twitch opens its tooltip a moment after the pointer reaches the card.
+    await vi.waitFor(() => expect(asked()).toBe(1));
+    openTooltip();
+    await vi.waitFor(() => expect(frame()).not.toBeNull());
+    return frame()!;
+  }
+
+  it("plays with the sound of the stream in the page, even when Twitch's saved setting is muted", async () => {
+    // As when the user muted Twitch in another tab.
+    localStorage.setItem('video-muted', '{"default":true}');
+    const iframe = await openAfterAnswer('florence', streamIs({ muted: false, volume: 0.3 }));
+    expect(iframe.src).toBe(embedUrl('florence', false));
+    const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    report({ playback: 'Playing', muted: false, volume: 0.8 });
+    expect(post).toHaveBeenCalledWith(
+      { eventName: EMBED_SET_VOLUME, params: 0.3, namespace: EMBED_NAMESPACE },
+      EMBED_ORIGIN,
+    );
+    expect(post).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(sent).toEqual([held(true)]));
+  });
+
+  it('stays muted while the stream in the page plays muted', async () => {
+    const iframe = await openAfterAnswer('florence', streamIs({ muted: true, volume: 0.8 }));
+    expect(iframe.src).toBe(embedUrl('florence', true));
+    const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    report({ playback: 'Playing', muted: false, volume: 0.8 });
+    expect(post).toHaveBeenCalledWith(
+      { eventName: EMBED_SET_MUTED, params: true, namespace: EMBED_NAMESPACE },
+      EMBED_ORIGIN,
+    );
+    await Promise.resolve();
+    expect(sent).toEqual([]);
+  });
+
+  it("follows Twitch's saved setting when no stream plays in the page", async () => {
+    localStorage.setItem('video-muted', '{"default":true}');
+    const iframe = await openAfterAnswer('florence', streamIs(null));
+    expect(iframe.src).toBe(embedUrl('florence', true));
   });
 
   it('ignores messages that are not from its player', async () => {

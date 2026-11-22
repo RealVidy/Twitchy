@@ -62,6 +62,27 @@ export interface MuteToggled {
   volume: number;
 }
 
+/** Asks the page script how the user has the stream in the page: muted or not, and its volume. */
+export const STREAM_SOUND_REQUEST = 'twitchy:stream-sound-request';
+/** The page script's answer to STREAM_SOUND_REQUEST. */
+export const STREAM_SOUND = 'twitchy:stream-sound';
+
+export interface StreamSoundRequest {
+  type: typeof STREAM_SOUND_REQUEST;
+}
+
+/** Muted or not, and the volume (0 to 1), which Twitch keeps while muted. */
+export interface Sound {
+  muted: boolean;
+  volume: number;
+}
+
+export interface StreamSound {
+  type: typeof STREAM_SOUND;
+  /** Null while no stream plays in the page. */
+  sound: Sound | null;
+}
+
 /** Twitch's volume before the user ever moved its slider. */
 const DEFAULT_VOLUME = 0.5;
 
@@ -69,7 +90,7 @@ const DEFAULT_VOLUME = 0.5;
  * The volume Twitch saved for its player. Unlike the video's own volume, which Twitch sets to 0 while
  * muted, it keeps the level the stream comes back at.
  */
-export function savedVolume(storage: Pick<Storage, 'getItem'> = localStorage): { volume: number; muted: boolean } {
+export function savedVolume(storage: Pick<Storage, 'getItem'> = localStorage): Sound {
   const raw = storage.getItem('volume');
   const volume = raw === null ? NaN : Number(raw);
   let muted = false;

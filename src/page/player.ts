@@ -1,5 +1,6 @@
 import { SEL } from '../content/selectors';
 import type { PlayerStats } from '../shared/player-stats';
+import type { Sound } from '../shared/volume';
 
 /** The parts of Twitch's player (Amazon IVS) that we use. */
 export interface IvsPlayer {
@@ -58,13 +59,33 @@ export function readStats(player: IvsPlayer | null): PlayerStats | null {
 }
 
 /**
- * Mutes the stream while a sidebar preview plays, then unmutes it, but only if we were the ones
- * who muted it. The mute goes through the player, not Twitch's saved setting, so a reload keeps
- * the user's own choice.
+ * How the user has the stream while it plays, or null when no stream plays. A mute `held` for a
+ * sidebar preview is ours, not the user's: the stream counts as unmuted then.
  */
-export function createMuteHold(find: () => IvsPlayer | null = findPlayer): (held: boolean) => void {
+export function streamSound(player: IvsPlayer | null, held: boolean): Sound | null {
+  if (!player) return null;
+  try {
+    const state = player.getState();
+    if (player.isPaused() || (state !== 'Playing' && state !== 'Buffering')) return null;
+    const volume = player.getVolume();
+    if (!(volume >= 0 && volume <= 1)) return null;
+    return { muted: !held && player.isMuted(), volume };
+  } catch {
+    return null; // Twitch changed its player: let the caller fall back to Twitch's saved setting
+  }
+}
+
+/**
+ * Mutes the stream while a sidebar preview plays (`set(true)`), then unmutes it, but only if we
+ * were the ones who muted it. The mute goes through the player, not Twitch's saved setting, so a
+ * reload keeps the user's own choice. `holding()` says whether the stream is muted by us.
+ */
+export function createMuteHold(find: () => IvsPlayer | null = findPlayer): {
+  set: (held: boolean) => void;
+  holding: () => boolean;
+} {
   let muted: IvsPlayer | null = null;
-  return (held) => {
+  const set = (held: boolean) => {
     try {
       if (held) {
         if (muted) return;
@@ -81,6 +102,7 @@ export function createMuteHold(find: () => IvsPlayer | null = findPlayer): (held
       // Twitch changed its player: leave the sound alone rather than break the page.
     }
   };
+  return { set, holding: () => muted !== null };
 }
 
 /**
