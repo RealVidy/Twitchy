@@ -22,6 +22,13 @@ To try it, load `dist/` at `chrome://extensions` with **Developer mode** on (**L
 
 The project uses Semantic Versioning, with releases listed in `CHANGELOG.md` and tagged `vX.Y.Z`. `package.json` is the only place the version is set: `manifest.config.ts` reads it into the manifest. To make a release, add the changelog entry, then run `npm version patch|minor|major`, which bumps the version, commits it and tags it.
 
+Every improvement gets its own release once it's committed, bumped by what it changed:
+- **patch** for a bug fix (`fix:` commits).
+- **minor** for a new feature or setting (`feat:` commits).
+- **major** for a change that breaks something users rely on, such as removing a feature or a setting, or resetting saved settings.
+
+Changes that users don't see (docs, tests, refactors, tooling) don't bump the version.
+
 ## Architecture
 
 `manifest.config.ts` declares four execution contexts. Each one can only reach certain things, and that explains most of the code's structure:
