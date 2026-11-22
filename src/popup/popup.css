@@ -34,7 +34,7 @@ h1 {
   color: var(--muted);
 }
 
-.row--sub:has(input:disabled) {
+.row--sub:has(input:disabled, select:disabled) {
   opacity: 0.5;
 }
 

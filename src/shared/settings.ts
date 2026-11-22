@@ -6,6 +6,13 @@ export type BadgeKind = (typeof BADGE_KINDS)[number];
 export const DELETED_STYLES = ['strike', 'faded', 'twitch'] as const;
 export type DeletedStyle = (typeof DELETED_STYLES)[number];
 
+/**
+ * Whether sidebar previews play with sound: always (`on`), never (`off`), or as the stream being
+ * watched does (`stream`), or as Twitch's saved setting says when none plays.
+ */
+export const PREVIEW_SOUNDS = ['on', 'off', 'stream'] as const;
+export type PreviewSound = (typeof PREVIEW_SOUNDS)[number];
+
 export interface Settings {
   /** Adds 7TV, BetterTTV and FrankerFaceZ sections to Twitch's emote picker. */
   pickerEmotes: boolean;
@@ -24,8 +31,10 @@ export interface Settings {
   videoStats: boolean;
   /** Shows the stream's thumbnail when hovering a live channel in the sidebar. */
   sidebarPreviews: boolean;
-  /** Plays the stream itself, with its sound, in that preview, and mutes the stream being watched meanwhile. */
+  /** Plays the stream itself in that preview, and mutes the stream being watched while it has sound. */
   sidebarPreviewVideo: boolean;
+  /** Whether the stream in that preview plays with sound. */
+  sidebarPreviewSound: PreviewSound;
   /** Opens the collapsed sidebar while the pointer rests on it. */
   sidebarExpandOnHover: boolean;
   /** The mouse wheel over the player turns the volume, past 100% for quiet channels. */
@@ -51,6 +60,7 @@ export const DEFAULT_SETTINGS: Settings = {
   videoStats: true,
   sidebarPreviews: true,
   sidebarPreviewVideo: true,
+  sidebarPreviewSound: 'on',
   sidebarExpandOnHover: true,
   volumeWheel: true,
   clickToMute: true,
@@ -92,6 +102,9 @@ export function normalizeSettings(raw: unknown): Settings {
     videoStats: bool(r.videoStats, DEFAULT_SETTINGS.videoStats),
     sidebarPreviews: bool(r.sidebarPreviews, DEFAULT_SETTINGS.sidebarPreviews),
     sidebarPreviewVideo: bool(r.sidebarPreviewVideo, DEFAULT_SETTINGS.sidebarPreviewVideo),
+    sidebarPreviewSound: PREVIEW_SOUNDS.includes(r.sidebarPreviewSound as PreviewSound)
+      ? (r.sidebarPreviewSound as PreviewSound)
+      : DEFAULT_SETTINGS.sidebarPreviewSound,
     sidebarExpandOnHover: bool(r.sidebarExpandOnHover, DEFAULT_SETTINGS.sidebarExpandOnHover),
     volumeWheel: bool(r.volumeWheel, DEFAULT_SETTINGS.volumeWheel),
     clickToMute: bool(r.clickToMute, DEFAULT_SETTINGS.clickToMute),

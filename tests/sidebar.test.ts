@@ -14,6 +14,7 @@ import {
   sideNavLogin,
 } from '../src/content/sidebar';
 import { PREVIEW_FRAME_NAME } from '../src/embed/embedded';
+import type { PreviewSound } from '../src/shared/settings';
 import { HOLD_MUTE, savedVolume, STREAM_SOUND, STREAM_SOUND_REQUEST } from '../src/shared/volume';
 import { isolateListeners } from './helpers';
 
@@ -166,7 +167,7 @@ describe('installSidebarPreviews', () => {
     document.body.innerHTML = SIDEBAR;
     document.documentElement.classList.remove(TOOLTIP_GONE);
     enabled = true;
-    previews = installSidebarPreviews(() => enabled, () => false);
+    previews = installSidebarPreviews(() => enabled, () => false, () => 'on');
   });
 
   it('adds the thumbnail of the hovered channel when Twitch opens its tooltip', async () => {
@@ -284,6 +285,7 @@ describe('installSidebarPreviews', () => {
 
 describe('installSidebarPreviews with the stream playing', () => {
   let video: boolean;
+  let sound: PreviewSound;
   let previews: { check: () => void };
   let sent: unknown[];
 
@@ -296,12 +298,13 @@ describe('installSidebarPreviews with the stream playing', () => {
     localStorage.setItem('volume', '0.8');
     history.replaceState(null, '', '/');
     video = true;
+    sound = 'stream';
     sent = [];
     // Stands in for the page script, which mutes the stream for HOLD_MUTE.
     window.addEventListener('message', (e) => {
       if ((e.data as { type?: unknown } | null)?.type === HOLD_MUTE) sent.push(e.data);
     });
-    previews = installSidebarPreviews(() => true, () => video);
+    previews = installSidebarPreviews(() => true, () => video, () => sound);
   });
 
   // window.postMessage delivers later: let a test's messages arrive before the next one listens.
@@ -450,6 +453,42 @@ describe('installSidebarPreviews with the stream playing', () => {
     );
     await Promise.resolve();
     expect(sent).toEqual([]);
+  });
+
+  it('plays with sound when set to, even while the stream in the page is muted', async () => {
+    sound = 'on';
+    const iframe = await openAfterAnswer('florence', streamIs({ muted: true, volume: 0.3 }));
+    expect(iframe.src).toBe(embedUrl('florence', false));
+    const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    report({ playback: 'Playing', muted: false, volume: 0.8 });
+    // At the volume the stream keeps while muted.
+    expect(post).toHaveBeenCalledWith(
+      { eventName: EMBED_SET_VOLUME, params: 0.3, namespace: EMBED_NAMESPACE },
+      EMBED_ORIGIN,
+    );
+    expect(post).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(sent).toEqual([held(true)]));
+  });
+
+  it('stays muted when set to, and leaves the stream in the page alone', async () => {
+    sound = 'off';
+    Object.defineProperty(navigator, 'userActivation', { value: { hasBeenActive: true }, configurable: true });
+    try {
+      const iframe = await openAfterAnswer('florence', streamIs({ muted: false, volume: 0.8 }));
+      expect(iframe.src).toBe(embedUrl('florence', true));
+      const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+      report({ playback: 'Playing', muted: true, volume: 0.8 });
+      expect(post).not.toHaveBeenCalled();
+      report({ playback: 'Playing', muted: false, volume: 0.8 });
+      expect(post).toHaveBeenCalledWith(
+        { eventName: EMBED_SET_MUTED, params: true, namespace: EMBED_NAMESPACE },
+        EMBED_ORIGIN,
+      );
+      await Promise.resolve();
+      expect(sent).toEqual([]);
+    } finally {
+      delete (navigator as { userActivation?: unknown }).userActivation;
+    }
   });
 
   it("follows Twitch's saved setting when no stream plays in the page", async () => {

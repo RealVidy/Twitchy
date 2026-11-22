@@ -6,6 +6,7 @@ import {
   saveSettings,
   type BadgeKind,
   type DeletedStyle,
+  type PreviewSound,
   type Settings,
 } from '../shared/settings';
 
@@ -20,6 +21,7 @@ const skipContentWarning = form.elements.namedItem('skipContentWarning') as HTML
 const videoStats = form.elements.namedItem('videoStats') as HTMLInputElement;
 const sidebarPreviews = form.elements.namedItem('sidebarPreviews') as HTMLInputElement;
 const sidebarPreviewVideo = form.elements.namedItem('sidebarPreviewVideo') as HTMLInputElement;
+const sidebarPreviewSound = form.elements.namedItem('sidebarPreviewSound') as HTMLSelectElement;
 const sidebarExpandOnHover = form.elements.namedItem('sidebarExpandOnHover') as HTMLInputElement;
 const volumeWheel = form.elements.namedItem('volumeWheel') as HTMLInputElement;
 const clickToMute = form.elements.namedItem('clickToMute') as HTMLInputElement;
@@ -45,6 +47,8 @@ function show(s: Settings): void {
   sidebarPreviews.checked = s.sidebarPreviews;
   sidebarPreviewVideo.checked = s.sidebarPreviewVideo;
   sidebarPreviewVideo.disabled = !s.sidebarPreviews;
+  sidebarPreviewSound.value = s.sidebarPreviewSound;
+  sidebarPreviewSound.disabled = !s.sidebarPreviews || !s.sidebarPreviewVideo;
   sidebarExpandOnHover.checked = s.sidebarExpandOnHover;
   volumeWheel.checked = s.volumeWheel;
   clickToMute.checked = s.clickToMute;
@@ -66,6 +70,7 @@ form.addEventListener('change', async () => {
       videoStats: videoStats.checked,
       sidebarPreviews: sidebarPreviews.checked,
       sidebarPreviewVideo: sidebarPreviewVideo.checked,
+      sidebarPreviewSound: sidebarPreviewSound.value as PreviewSound,
       sidebarExpandOnHover: sidebarExpandOnHover.checked,
       volumeWheel: volumeWheel.checked,
       clickToMute: clickToMute.checked,

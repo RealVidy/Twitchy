@@ -1,4 +1,5 @@
 import { PREVIEW_FRAME_NAME } from '../embed/embedded';
+import type { PreviewSound } from '../shared/settings';
 import {
   HOLD_MUTE,
   savedVolume,
@@ -111,15 +112,19 @@ function pageWasActivated(): boolean {
 
 /**
  * Shows a preview of the stream in the tooltip Twitch opens over a live channel in the sidebar,
- * as other Twitch extensions do: its thumbnail, or with `video` the stream itself, with its sound.
- * The preview is muted, and plays at the volume, as the stream being watched is; without one, as
- * Twitch's saved setting says. While a preview plays with sound, the stream being watched is
- * muted. Twitch's tooltip does not say which channel it is for, so we remember the card under the
- * pointer (or keyboard focus) and only look for the tooltip while one is. For channels streaming
- * together, the preview is the channel of the card. When the pointer leaves the card, the tooltip
- * goes with its preview.
+ * as other Twitch extensions do: its thumbnail, or with `video` the stream itself. It plays at the
+ * volume of the stream being watched (without one, Twitch's saved volume), with sound or not as
+ * `sound` says. While a preview plays with sound, the stream being watched is muted. Twitch's
+ * tooltip does not say which channel it is for, so we remember the card under the pointer (or
+ * keyboard focus) and only look for the tooltip while one is. For channels streaming together, the
+ * preview is the channel of the card. When the pointer leaves the card, the tooltip goes with its
+ * preview.
  */
-export function installSidebarPreviews(enabled: () => boolean, video: () => boolean): { check: () => void } {
+export function installSidebarPreviews(
+  enabled: () => boolean,
+  video: () => boolean,
+  sound: () => PreviewSound,
+): { check: () => void } {
   const root = document.documentElement;
   let login: string | null = null;
   let holding = false;
@@ -129,7 +134,11 @@ export function installSidebarPreviews(enabled: () => boolean, video: () => bool
    * Twitch's saved setting can say muted while the stream in this tab plays with sound, e.g. when
    * the user muted Twitch in another tab: the stream in the page is what the preview should match.
    */
-  const wanted = (): Sound => stream ?? savedVolume();
+  const wanted = (): Sound => {
+    const watched = stream ?? savedVolume();
+    const choice = sound();
+    return choice === 'stream' ? watched : { muted: choice === 'off', volume: watched.volume };
+  };
   /** The answer comes before Twitch opens its tooltip, a moment after the pointer reaches the card. */
   const askStream = () => {
     const message: StreamSoundRequest = { type: STREAM_SOUND_REQUEST };

@@ -22,6 +22,8 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ videoStats: false }).videoStats).toBe(false);
     expect(normalizeSettings({ sidebarPreviews: false }).sidebarPreviews).toBe(false);
     expect(normalizeSettings({ sidebarPreviewVideo: false }).sidebarPreviewVideo).toBe(false);
+    expect(normalizeSettings({ sidebarPreviewSound: 'stream' }).sidebarPreviewSound).toBe('stream');
+    expect(normalizeSettings({ sidebarPreviewSound: 'loud' }).sidebarPreviewSound).toBe('on');
     expect(normalizeSettings({ sidebarExpandOnHover: false }).sidebarExpandOnHover).toBe(false);
     expect(normalizeSettings({ volumeWheel: false }).volumeWheel).toBe(false);
     expect(normalizeSettings({ clickToMute: false }).clickToMute).toBe(false);

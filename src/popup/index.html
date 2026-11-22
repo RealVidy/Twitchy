@@ -52,7 +52,15 @@
       </label>
       <label class="row row--sub">
         <input type="checkbox" name="sidebarPreviewVideo" />
-        <span>Play the stream with its sound, muting the one I'm watching</span>
+        <span>Play the stream, muting the one I'm watching while it has sound</span>
+      </label>
+      <label class="row row--sub row--select">
+        <span>Preview sound</span>
+        <select name="sidebarPreviewSound">
+          <option value="on">On</option>
+          <option value="off">Off</option>
+          <option value="stream">Same as the stream I'm watching</option>
+        </select>
       </label>
       <label class="row">
         <input type="checkbox" name="sidebarExpandOnHover" />

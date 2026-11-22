@@ -47,6 +47,7 @@ const videoStats = installVideoStats(() => settings.videoStats);
 const sidebarPreviews = installSidebarPreviews(
   () => settings.sidebarPreviews,
   () => settingsLoaded && settings.sidebarPreviewVideo,
+  () => settings.sidebarPreviewSound,
 );
 // Not before the settings are in: it would open the sidebar for someone who turned this off.
 const sidebarPeek = installSidebarPeek(() => settingsLoaded && settings.sidebarExpandOnHover);
