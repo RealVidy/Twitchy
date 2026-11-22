@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VolumeBoost, type AudioContextLike, type BoostStorage } from '../src/content/volume';
-import { createMuteHold, streamSound, type IvsPlayer } from '../src/page/player';
+import { createChannelVolume, createMuteHold, streamSound, type IvsPlayer } from '../src/page/player';
 import {
+  CHANNEL_VOLUME,
+  CHANNEL_VOLUME_CHANGED,
   HOLD_MUTE,
   MAX_LEVEL,
   normalizeBoost,
@@ -374,6 +376,40 @@ describe('the page script', () => {
     }
   });
 
+  it("keeps the channel's volume and reports the user's changes from the video's events", async () => {
+    await import('../src/page/index');
+    localStorage.clear();
+    document.body.innerHTML = '<div data-a-target="video-player"><video></video></div>';
+    let volume = 0.9;
+    const player = {
+      setVolume: vi.fn((v: number) => void (volume = v)),
+      getVolume: () => volume,
+      isMuted: () => false,
+      getLiveLatency: () => 0,
+    };
+    const fiber = { return: null, memoizedProps: { mediaPlayerInstance: player } };
+    Object.assign(document.querySelector('[data-a-target="video-player"]')!, { __reactFiber$abc: fiber });
+    const reports: unknown[] = [];
+    const listen = (e: MessageEvent) => {
+      if ((e.data as { type?: unknown } | null)?.type === CHANNEL_VOLUME_CHANGED) reports.push(e.data);
+    };
+    window.addEventListener('message', listen);
+    const send = (data: unknown) => window.dispatchEvent(new MessageEvent('message', { data, source: window }));
+    try {
+      send({ type: CHANNEL_VOLUME, login: 'florence', volume: 0.3 });
+      expect(volume).toBe(0.3);
+      expect(localStorage.getItem('volume')).toBe('0.3');
+      volume = 0.6;
+      document.querySelector('video')!.dispatchEvent(new Event('volumechange'));
+      await vi.waitFor(() =>
+        expect(reports).toEqual([{ type: CHANNEL_VOLUME_CHANGED, login: 'florence', volume: 0.6 }]),
+      );
+      send({ type: CHANNEL_VOLUME, login: null, volume: null });
+    } finally {
+      window.removeEventListener('message', listen);
+    }
+  });
+
   it('saves the volume where Twitch does, keeping its other mute flags', async () => {
     const { saveVolume } = await import('../src/page/index');
     localStorage.clear();
@@ -459,5 +495,90 @@ describe('createMuteHold', () => {
       set(true);
       set(false);
     }).not.toThrow();
+  });
+});
+
+describe('createChannelVolume', () => {
+  function player(volume: number, muted = false) {
+    const p = {
+      volume,
+      muted,
+      setVolume: vi.fn((v: number) => void (p.volume = v)),
+      getVolume: () => p.volume,
+      isMuted: () => p.muted,
+    };
+    return p;
+  }
+  function setup(initial: ReturnType<typeof player> | null) {
+    let current = initial;
+    const reports: [string, number][] = [];
+    const saves: number[] = [];
+    const tracker = createChannelVolume(
+      () => current as unknown as IvsPlayer | null,
+      (login, volume) => void reports.push([login, volume]),
+      (volume) => void saves.push(volume),
+    );
+    return { tracker, reports, saves, swap: (p: ReturnType<typeof player> | null) => void (current = p) };
+  }
+
+  it("sets the player to the channel's saved volume, and saves it where Twitch does", () => {
+    const p = player(0.8);
+    const { tracker, reports, saves } = setup(p);
+    tracker.set('florence', 0.3);
+    expect(p.volume).toBe(0.3);
+    expect(saves).toEqual([0.3]);
+    tracker.update();
+    expect(reports).toEqual([]);
+  });
+
+  it('reports the volume the user picks, but not muting or silence', () => {
+    const p = player(0.8);
+    const { tracker, reports } = setup(p);
+    tracker.set('florence', 0.3);
+    p.volume = 0.6;
+    tracker.update();
+    tracker.update();
+    expect(reports).toEqual([['florence', 0.6]]);
+    p.muted = true;
+    p.volume = 0.2;
+    tracker.update();
+    p.muted = false;
+    p.volume = 0;
+    tracker.update();
+    expect(reports).toEqual([['florence', 0.6]]);
+  });
+
+  it("keeps the player's volume for a channel without a saved one, as its own", () => {
+    const p = player(0.7);
+    const { tracker, reports, saves } = setup(p);
+    tracker.set('florence', null);
+    expect(p.setVolume).not.toHaveBeenCalled();
+    expect(saves).toEqual([]);
+    expect(reports).toEqual([['florence', 0.7]]);
+  });
+
+  it('waits for the player, and gives each new one the volume before counting changes', () => {
+    const { tracker, reports, swap } = setup(null);
+    tracker.set('florence', 0.3);
+    // Twitch makes its player at its own saved volume: that is no choice of the user's.
+    const first = player(0.9);
+    swap(first);
+    tracker.update();
+    expect(first.volume).toBe(0.3);
+    const second = player(0.9);
+    swap(second);
+    tracker.update();
+    expect(second.volume).toBe(0.3);
+    expect(reports).toEqual([]);
+  });
+
+  it('stops for no channel', () => {
+    const p = player(0.8);
+    const { tracker, reports } = setup(p);
+    tracker.set('florence', 0.3);
+    tracker.set(null, null);
+    p.volume = 0.5;
+    tracker.update();
+    expect(reports).toEqual([]);
   });
 });

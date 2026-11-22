@@ -288,6 +288,8 @@ describe('installSidebarPreviews with the stream playing', () => {
   let sound: PreviewSound;
   let previews: { check: () => void };
   let sent: unknown[];
+  /** The volumes saved for each channel. */
+  let saved: Record<string, number>;
 
   isolateListeners();
 
@@ -300,11 +302,15 @@ describe('installSidebarPreviews with the stream playing', () => {
     video = true;
     sound = 'stream';
     sent = [];
+    saved = {};
     // Stands in for the page script, which mutes the stream for HOLD_MUTE.
     window.addEventListener('message', (e) => {
       if ((e.data as { type?: unknown } | null)?.type === HOLD_MUTE) sent.push(e.data);
     });
-    previews = installSidebarPreviews(() => true, () => video, () => sound);
+    previews = installSidebarPreviews(() => true, () => video, () => sound, {
+      peek: (login) => saved[login] ?? null,
+      load: async () => {},
+    });
   });
 
   // window.postMessage delivers later: let a test's messages arrive before the next one listens.
@@ -360,6 +366,18 @@ describe('installSidebarPreviews with the stream playing', () => {
     post.mockClear();
     report({ playback: 'Playing', muted: false, volume: 0.8 });
     expect(post).not.toHaveBeenCalled();
+  });
+
+  it('plays at the volume saved for its channel, muted or not as the stream being watched is', async () => {
+    saved = { florence: 0.3 };
+    const iframe = await openFor('florence');
+    const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    report({ playback: 'Idle', muted: false, volume: 0.5 });
+    expect(post).toHaveBeenCalledWith(
+      { eventName: EMBED_SET_VOLUME, params: 0.3, namespace: EMBED_NAMESPACE },
+      EMBED_ORIGIN,
+    );
+    expect(post).not.toHaveBeenCalledWith(expect.objectContaining({ eventName: EMBED_SET_MUTED }), EMBED_ORIGIN);
   });
 
   it('stays muted, and leaves the stream being watched alone, when Twitch is muted', async () => {

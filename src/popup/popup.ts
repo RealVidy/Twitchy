@@ -24,6 +24,7 @@ const sidebarPreviewVideo = form.elements.namedItem('sidebarPreviewVideo') as HT
 const sidebarPreviewSound = form.elements.namedItem('sidebarPreviewSound') as HTMLSelectElement;
 const sidebarExpandOnHover = form.elements.namedItem('sidebarExpandOnHover') as HTMLInputElement;
 const volumeWheel = form.elements.namedItem('volumeWheel') as HTMLInputElement;
+const volumePerChannel = form.elements.namedItem('volumePerChannel') as HTMLInputElement;
 const clickToMute = form.elements.namedItem('clickToMute') as HTMLInputElement;
 const hideLockedEmotes = form.elements.namedItem('hideLockedEmotes') as HTMLInputElement;
 const hideSendButton = form.elements.namedItem('hideSendButton') as HTMLInputElement;
@@ -51,6 +52,7 @@ function show(s: Settings): void {
   sidebarPreviewSound.disabled = !s.sidebarPreviews || !s.sidebarPreviewVideo;
   sidebarExpandOnHover.checked = s.sidebarExpandOnHover;
   volumeWheel.checked = s.volumeWheel;
+  volumePerChannel.checked = s.volumePerChannel;
   clickToMute.checked = s.clickToMute;
   hideLockedEmotes.checked = s.hideLockedEmotes;
   hideSendButton.checked = s.hideSendButton;
@@ -73,6 +75,7 @@ form.addEventListener('change', async () => {
       sidebarPreviewSound: sidebarPreviewSound.value as PreviewSound,
       sidebarExpandOnHover: sidebarExpandOnHover.checked,
       volumeWheel: volumeWheel.checked,
+      volumePerChannel: volumePerChannel.checked,
       clickToMute: clickToMute.checked,
       hideLockedEmotes: hideLockedEmotes.checked,
       hideSendButton: hideSendButton.checked,

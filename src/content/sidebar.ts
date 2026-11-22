@@ -110,11 +110,18 @@ function pageWasActivated(): boolean {
   return navigator.userActivation?.hasBeenActive === true;
 }
 
+/** The volumes saved for each channel, as previews read them. */
+export interface PreviewVolumes {
+  /** The channel's saved volume: null without one, undefined until loaded. */
+  peek(login: string): number | null | undefined;
+  load(login: string): Promise<unknown>;
+}
+
 /**
  * Shows a preview of the stream in the tooltip Twitch opens over a live channel in the sidebar,
  * as other Twitch extensions do: its thumbnail, or with `video` the stream itself. It plays at the
- * volume of the stream being watched (without one, Twitch's saved volume), with sound or not as
- * `sound` says. While a preview plays with sound, the stream being watched is muted. Twitch's
+ * volume saved for its channel in `volumes`, or else at the volume of the stream being watched
+ * (without one, Twitch's saved volume), with sound or not as `sound` says. While a preview plays with sound, the stream being watched is muted. Twitch's
  * tooltip does not say which channel it is for, so we remember the card under the pointer (or
  * keyboard focus) and only look for the tooltip while one is. For channels streaming together, the
  * preview is the channel of the card. When the pointer leaves the card, the tooltip goes with its
@@ -124,6 +131,7 @@ export function installSidebarPreviews(
   enabled: () => boolean,
   video: () => boolean,
   sound: () => PreviewSound,
+  volumes: PreviewVolumes | null = null,
 ): { check: () => void } {
   const root = document.documentElement;
   let login: string | null = null;
@@ -134,10 +142,12 @@ export function installSidebarPreviews(
    * Twitch's saved setting can say muted while the stream in this tab plays with sound, e.g. when
    * the user muted Twitch in another tab: the stream in the page is what the preview should match.
    */
-  const wanted = (): Sound => {
+  const wanted = (channel: string | null): Sound => {
     const watched = stream ?? savedVolume();
     const choice = sound();
-    return choice === 'stream' ? watched : { muted: choice === 'off', volume: watched.volume };
+    const muted = choice === 'stream' ? watched.muted : choice === 'off';
+    const saved = channel ? volumes?.peek(channel) : null;
+    return { muted, volume: saved ?? watched.volume };
   };
   /** The answer comes before Twitch opens its tooltip, a moment after the pointer reaches the card. */
   const askStream = () => {
@@ -169,7 +179,7 @@ export function installSidebarPreviews(
       if (!login || !enabled()) {
         tooltip.querySelector(`:scope > .${PREVIEW}`)?.remove();
       } else if (
-        addPreview(tooltip, login, withVideo ? { muted: wanted().muted } : null) &&
+        addPreview(tooltip, login, withVideo ? { muted: wanted(login).muted } : null) &&
         tooltip.getBoundingClientRect().bottom > window.innerHeight
       ) {
         // Twitch placed the tooltip for its shorter size. Its positioning library moves it back
@@ -190,10 +200,10 @@ export function installSidebarPreviews(
     );
     if (!frame) return;
     const { playback, volume, muted } = (data.params ?? {}) as Record<string, unknown>;
-    const want = wanted();
+    const want = wanted(frame.dataset.login ?? null);
     const send = (eventName: number, params: unknown) =>
       frame.contentWindow?.postMessage({ eventName, params, namespace: EMBED_NAMESPACE }, EMBED_ORIGIN);
-    // The embed keeps its own volume; play at the one the user picked on Twitch.
+    // The embed keeps its own volume; play at the one the user picked for the channel, or on Twitch.
     if (typeof volume === 'number' && Math.abs(volume - want.volume) > 0.01) send(EMBED_SET_VOLUME, want.volume);
     if (muted === false && want.muted) send(EMBED_SET_MUTED, true);
     // Before any click or key press in the page, the browser may let the preview play only muted,
@@ -206,7 +216,10 @@ export function installSidebarPreviews(
   const pointAt = (target: EventTarget | null) => {
     const was = login;
     login = sideNavLogin(target);
-    if (login && login !== was) askStream();
+    if (login && login !== was) {
+      askStream();
+      void volumes?.load(login);
+    }
     // Twitch keeps its tooltip a moment after the pointer leaves the card, and as long as the
     // pointer is over it, in the way of the pointer. Hide it and stop the preview right away.
     root.classList.toggle(TOOLTIP_GONE, !login && enabled());
@@ -219,7 +232,10 @@ export function installSidebarPreviews(
   // Twitch moves the focus into its tooltip when it opens, so only a card getting focus counts.
   document.addEventListener('focusin', (e) => {
     const focused = sideNavLogin(e.target);
-    if (focused && focused !== login) askStream();
+    if (focused && focused !== login) {
+      askStream();
+      void volumes?.load(focused);
+    }
     login = focused ?? login;
     if (login) {
       root.classList.remove(TOOLTIP_GONE);

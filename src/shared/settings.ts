@@ -39,6 +39,11 @@ export interface Settings {
   sidebarExpandOnHover: boolean;
   /** The mouse wheel over the player turns the volume, past 100% for quiet channels. */
   volumeWheel: boolean;
+  /**
+   * Each channel plays at the volume it was last left at, its sidebar preview too. Muting stays
+   * Twitch's own, for all channels.
+   */
+  volumePerChannel: boolean;
   /** A click on the stream mutes or unmutes it. */
   clickToMute: boolean;
   /** Hides the emotes the picker shows with a lock (subscriber emotes you don't have). */
@@ -63,6 +68,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sidebarPreviewSound: 'on',
   sidebarExpandOnHover: true,
   volumeWheel: true,
+  volumePerChannel: true,
   clickToMute: true,
   hideLockedEmotes: true,
   hideSendButton: true,
@@ -107,6 +113,7 @@ export function normalizeSettings(raw: unknown): Settings {
       : DEFAULT_SETTINGS.sidebarPreviewSound,
     sidebarExpandOnHover: bool(r.sidebarExpandOnHover, DEFAULT_SETTINGS.sidebarExpandOnHover),
     volumeWheel: bool(r.volumeWheel, DEFAULT_SETTINGS.volumeWheel),
+    volumePerChannel: bool(r.volumePerChannel, DEFAULT_SETTINGS.volumePerChannel),
     clickToMute: bool(r.clickToMute, DEFAULT_SETTINGS.clickToMute),
     hideLockedEmotes: bool(r.hideLockedEmotes, DEFAULT_SETTINGS.hideLockedEmotes),
     hideSendButton: bool(r.hideSendButton, DEFAULT_SETTINGS.hideSendButton),

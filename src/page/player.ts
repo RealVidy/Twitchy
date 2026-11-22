@@ -118,3 +118,58 @@ export function toggleMute(player: IvsPlayer | null): { muted: boolean; volume: 
     return null; // Twitch changed its player: leave the sound alone rather than break the page
   }
 }
+
+/**
+ * Keeps Twitch's player at the volume saved for the channel playing, and reports the volume the
+ * user picks for it. `set` gives the channel and its saved volume (null when none is: the player
+ * keeps its own). The volume goes on each new player Twitch makes, before any change counts as the
+ * user's; a channel without one keeps the player's volume, reported as its own. `update`, on the
+ * video's events, reports changes; a muted or silent stream is not one, since muting is for all
+ * channels.
+ */
+export function createChannelVolume(
+  find: () => IvsPlayer | null,
+  report: (login: string, volume: number) => void,
+  save: (volume: number) => void,
+): { set: (login: string | null, volume: number | null) => void; update: () => void } {
+  let login: string | null = null;
+  let volume: number | null = null;
+  /** The player that has the channel's volume. */
+  let applied: IvsPlayer | null = null;
+
+  const apply = (player: IvsPlayer) => {
+    try {
+      if (volume !== null && Math.abs(player.getVolume() - volume) > 0.001) player.setVolume(volume);
+      if (volume !== null) save(volume);
+      applied = player;
+    } catch {
+      // Twitch changed its player: leave the volume alone rather than break the page.
+    }
+  };
+  const update = () => {
+    if (!login) return;
+    const player = find();
+    if (!player) return;
+    if (player !== applied) {
+      // A channel without a saved volume keeps the player's, which is saved below.
+      const saved = volume !== null;
+      apply(player);
+      if (saved || applied !== player) return;
+    }
+    try {
+      const now = player.getVolume();
+      if (player.isMuted() || !(now > 0 && now <= 1) || now === volume) return;
+      volume = now;
+      report(login, now);
+    } catch {
+      // Twitch changed its player: report nothing.
+    }
+  };
+  const set = (nextLogin: string | null, nextVolume: number | null) => {
+    login = nextLogin;
+    volume = nextVolume;
+    applied = null;
+    update();
+  };
+  return { set, update };
+}

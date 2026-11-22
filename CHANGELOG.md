@@ -2,6 +2,11 @@
 
 All notable changes to this project are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-11-23
+
+- Player: each channel plays at the volume it was last left at, whether set with Twitch's slider or the mouse wheel. Muting stays the same for all channels. A "Keep each channel at its volume" setting turns it off.
+- Sidebar: a preview plays at the volume saved for its channel, or at the stream's volume for a channel not watched yet.
+
 ## [1.1.0] - 2026-11-22
 
 - Sidebar: a "Preview sound" setting plays stream previews with sound (the default, even while the stream being watched is muted), always muted, or muted as the stream being watched is.

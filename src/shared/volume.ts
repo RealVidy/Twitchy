@@ -102,3 +102,29 @@ export function savedVolume(storage: Pick<Storage, 'getItem'> = localStorage): S
   }
   return { volume: volume >= 0 && volume <= 1 ? volume : DEFAULT_VOLUME, muted };
 }
+
+/**
+ * Tells the page script which channel plays and the volume saved for it (null when none is), so it
+ * sets Twitch's player to it and reports the volume changes the user makes. A null `login` stops it.
+ */
+export const CHANNEL_VOLUME = 'twitchy:channel-volume';
+/** The page script's report of a volume the user picked for the channel. */
+export const CHANNEL_VOLUME_CHANGED = 'twitchy:channel-volume-changed';
+
+export interface ChannelVolume {
+  type: typeof CHANNEL_VOLUME;
+  login: string | null;
+  volume: number | null;
+}
+
+export interface ChannelVolumeChanged {
+  type: typeof CHANNEL_VOLUME_CHANGED;
+  login: string;
+  /** 0 to 1, never 0: a silent stream is muted, and muting is for all channels. */
+  volume: number;
+}
+
+/** A volume worth keeping for a channel: above 0 and up to 1. */
+export function isChannelVolume(v: unknown): v is number {
+  return typeof v === 'number' && v > 0 && v <= 1;
+}

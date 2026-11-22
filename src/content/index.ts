@@ -13,6 +13,7 @@ import {
 import { installAutocomplete } from './autocomplete';
 import { installBonusClaimer } from './channel-points';
 import { channelFromPath } from './channel';
+import { ChannelVolumes } from './channel-volume';
 import { installClickToMute } from './click-mute';
 import { installContentGateSkipper } from './content-gate';
 import { ColonComplete } from './colon-complete';
@@ -43,11 +44,14 @@ const live = new SevenTvLiveUpdates((update) => {
 const bonus = installBonusClaimer(() => settingsLoaded && settings.autoClaimPoints);
 const contentGate = installContentGateSkipper(() => settingsLoaded && settings.skipContentWarning);
 const videoStats = installVideoStats(() => settings.videoStats);
+// Not before the settings are in: a saved volume would be applied for someone who turned this off.
+const channelVolumes = new ChannelVolumes(chrome.storage.local, () => settingsLoaded && settings.volumePerChannel);
 // Not before the settings are in: it would mute the stream for someone who turned the video off.
 const sidebarPreviews = installSidebarPreviews(
   () => settings.sidebarPreviews,
   () => settingsLoaded && settings.sidebarPreviewVideo,
   () => settings.sidebarPreviewSound,
+  channelVolumes,
 );
 // Not before the settings are in: it would open the sidebar for someone who turned this off.
 const sidebarPeek = installSidebarPeek(() => settingsLoaded && settings.sidebarExpandOnHover);
@@ -60,6 +64,7 @@ async function switchChannel(login: string | null): Promise<void> {
   registry.setSets([]);
   void usage.switchChannel(login);
   void volume.switchChannel(login);
+  void channelVolumes.switchChannel(login);
   live.watch(null);
   if (!login) return;
 
@@ -98,12 +103,14 @@ function applySettings(next: Settings): void {
   sidebarPreviews.check();
   sidebarPeek.check();
   volume.apply();
+  void channelVolumes.check();
 }
 
 window.addEventListener('popstate', checkLocation);
 window.addEventListener('pagehide', () => void usage.flush());
 window.setInterval(checkLocation, 1000);
 volume.start();
+channelVolumes.start();
 // Not before the settings are in: a click would mute the stream for someone who turned this off.
 installClickToMute(() => settingsLoaded && settings.clickToMute, () => volume.gain);
 checkLocation();
