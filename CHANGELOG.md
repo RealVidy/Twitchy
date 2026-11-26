@@ -2,6 +2,10 @@
 
 All notable changes to this project are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-11-26
+
+- Sidebar: the "Save your Streak" links above the followed channels are hidden with the rest of the tidied-up sidebar.
+
 ## [1.2.0] - 2026-11-23
 
 - Player: each channel plays at the volume it was last left at, whether set with Twitch's slider or the mouse wheel. Muting stays the same for all channels. A "Keep each channel at its volume" setting turns it off.
