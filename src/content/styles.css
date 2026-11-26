@@ -125,7 +125,10 @@
   display: none !important;
 }
 
-/* Tidier Twitch: no chat header or leaderboard, no sidebar headings, no stories, no Prime/Luna. */
+/*
+ * Tidier Twitch: no chat header or leaderboard, no sidebar headings, no stories, no "Save your
+ * Streak", no Prime/Luna.
+ */
 /* The header comes back while the community list is open: it holds the way back to chat. */
 .twitchy-tidy .stream-chat:not(:has(#community-tab-content)) .stream-chat-header,
 .twitchy-tidy .toggle-visibility__right-column--expanded,
@@ -135,6 +138,9 @@
 .twitchy-tidy .side-nav--expanded .followed-side-nav-header,
 .twitchy-tidy .side-nav [role='group'][aria-label*='stories' i],
 .twitchy-tidy .side-nav [class*='stories' i]:not(.side-nav-card, .side-nav-card *),
+/* "Watch Streaks at risk": a "Save your Streak" link per channel, above the followed channels. */
+.twitchy-tidy .side-nav [role='group']:has(> [class*='saveYourStreak' i]),
+.twitchy-tidy .side-nav [class*='saveYourStreak' i],
 .twitchy-tidy .top-nav__prime {
   display: none !important;
 }
